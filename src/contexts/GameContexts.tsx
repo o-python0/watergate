@@ -1,43 +1,30 @@
 // src/contexts/GameContext.tsx
 import React, { createContext, useContext, useState } from 'react';
+import { COLOR_TO_HEX_MAP, defaultGameState } from '../constants';
 import { GameState, TokenColor, TokenType } from '../constants/types';
 
-// デフォルトのゲーム状態
-const defaultGameState: GameState = {
-  track: {
-    x: 300,
-    yStart: 50,
-    yEnd: 350,
-    width: 120,
-    cells: 11
-  },
-  initiativeMarker: {
-    position: 0,
-    radius: 15,
-    color: '#ffffff',
-    border: '#2c3e50',
-    label: 'I'
-  },
-  powerToken: {
-    position: -2,
-    radius: 15,
-    color: '#e74c3c',
-    border: '#2c3e50',
-    label: 'P'
-  },
-  evidenceTokens: [
-    { id: 1, position: -3, color: '#e74c3c', owner: null, label: '1', shape: 'square' },
-    { id: 2, position: 0, color: '#3498db', owner: null, label: '2', shape: 'square' },
-    { id: 3, position: 2, color: '#2ecc71', owner: null, label: '3', shape: 'square' }
-  ]
-};
+// types.ts に追加する型定義
+// export interface EvidenceToken {
+//   id: number;
+//   position: number;
+//   colors: TokenColor[];      // 実際の色の配列
+//   displayColor: string;      // 表示用の色（裏向きならグレー）
+//   owner: string | null;
+//   label: string;
+//   shape: 'square';
+//   isFaceUp: boolean;         // 表向きかどうか
+// }
+
+
 
 // コンテキストの型定義
 interface GameContextType {
   gameState: GameState;
   setGameState: React.Dispatch<React.SetStateAction<GameState>>;
   moveTokenBySteps: (tokenType: TokenType, tokenId: number | null, steps: number) => void;
-  getEvidenceTokenIdByColor: (colorName: TokenColor) => number | null; // 新しい関数の型定義を追加
+  getEvidenceTokenIdByColor: (colorName: TokenColor) => number | null;
+  flipTokenFaceUp: (tokenId: number) => void; // 表向きにする関数を追加
+  findFaceDownTokenWithColor: (colorName: TokenColor) => number | null; // 裏向きトークンを検索する関数
   animating: boolean;
 }
 
@@ -52,6 +39,36 @@ export const GameProvider: React.FC<{
   const [gameState, setGameState] = useState<GameState>(initialState || defaultGameState);
   const [animating, setAnimating] = useState<boolean>(false);
 
+  // トークンを表向きにする関数
+  const flipTokenFaceUp = (tokenId: number): void => {
+    setGameState(prev => ({
+      ...prev,
+      evidenceTokens: prev.evidenceTokens.map(token => {
+        if (token.id === tokenId) {
+          // 表向きにし、表示色を実際の色に変更
+          // 複数色の場合は最初の色を表示
+          const mainColor = token.colors[0];
+          return {
+            ...token,
+            isFaceUp: true,
+            displayColor: mainColor in COLOR_TO_HEX_MAP
+              ? COLOR_TO_HEX_MAP[mainColor as TokenColor]
+              : '#808080'
+          };
+        }
+        return token;
+      })
+    }));
+  };
+
+  // 裏向きで特定の色を持つトークンを検索する関数
+  const findFaceDownTokenWithColor = (colorName: TokenColor): number | null => {
+    const token = gameState.evidenceTokens.find(t => 
+      !t.isFaceUp && t.colors.includes(colorName)
+    );
+    return token ? token.id : null;
+  };
+  
   // トークン移動関数
   const moveTokenBySteps = (tokenType: TokenType, tokenId: number | null, steps: number): void => {
     if (animating || steps === 0) return;
@@ -139,18 +156,13 @@ export const GameProvider: React.FC<{
     }
   };
 
+  // 色から表向きのトークンIDを取得する関数
   const getEvidenceTokenIdByColor = (colorName: TokenColor): number | null => {
-    // 色名と実際のCSSカラーコードのマッピング
-    const colorToHexMap: Record<TokenColor, string> = {
-      'red': '#e74c3c',
-      'blue': '#3498db',
-      'green': '#2ecc71'
-    };
+    // 表向きのトークンのうち、指定された色を持つものを検索
+    const token = gameState.evidenceTokens.find(t => 
+      t.isFaceUp && t.colors.includes(colorName)
+    );
     
-    const hexColor = colorToHexMap[colorName];
-    
-    // 対応する色の証拠トークンをgameStateから検索
-    const token = gameState.evidenceTokens.find(t => t.color === hexColor);
     return token ? token.id : null;
   };
 
@@ -160,6 +172,8 @@ export const GameProvider: React.FC<{
     setGameState,
     moveTokenBySteps,
     getEvidenceTokenIdByColor,
+    flipTokenFaceUp,
+    findFaceDownTokenWithColor,
     animating
   };
 

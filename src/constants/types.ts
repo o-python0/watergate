@@ -12,7 +12,7 @@ export type ActionEffectType =
   | 'returnToken'         // トークンを元の位置に戻す
   | 'swapTokens';         // トークンを入れ替える
 
-// アクションパートの情報（簡略化）
+// アクションパートの情報
 export interface ActionPart {
   effectType: ActionEffectType;
   description: string;    // 効果の説明文
@@ -50,12 +50,13 @@ export interface Token {
 
 // 証拠トークンの型定義
 export interface EvidenceToken {
-  id: number;
-  position: number;
-  color: string;
-  owner: string | null;
-  label: string;
-  shape: 'square';
+  id: number;           // 一意識別子
+  position: number;     // トラック上の位置
+  colors: string[];     // 実際の色の配列
+  displayColor: string; // 表示用の色の配列
+  owner: string | null; // 所有プレイヤー
+  label: string;        // 表示ラベル
+  isFaceUp: boolean;    // 表向きかどうか
 }
 
 // トラック設定の型定義

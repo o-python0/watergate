@@ -1,6 +1,70 @@
-import { Card } from "./types";
+import { Card, GameState, TokenColor } from "./types";
 
 
+// 色名から16進数カラーコードへの変換マップ
+export const COLOR_TO_HEX_MAP: Record<TokenColor, string> = {
+  'red': '#e74c3c',
+  'blue': '#3498db',
+  'green': '#2ecc71'
+};
+
+// デフォルトのゲーム状態
+export const defaultGameState: GameState = {
+  track: {
+    x: 300,
+    yStart: 50,
+    yEnd: 350,
+    width: 120,
+    cells: 11
+  },
+  initiativeMarker: {
+    position: 0,
+    radius: 15,
+    color: '#ffffff',
+    border: '#2c3e50',
+    label: 'I'
+  },
+  powerToken: {
+    position: 0,
+    radius: 15,
+    color: '#e74c3c',
+    border: '#2c3e50',
+    label: 'P'
+  },
+  evidenceTokens: [
+    { 
+      id: 1, 
+      position: 0, 
+      colors: ['red' as TokenColor], 
+      displayColor: '#808080',
+      owner: null, 
+      label: '1', 
+      isFaceUp: false 
+    },
+    { 
+      id: 2, 
+      position: 0, 
+      colors: ['blue' as TokenColor], 
+      displayColor: '#808080',
+      owner: null, 
+      label: '2', 
+      isFaceUp: false 
+    },
+    { 
+      id: 3, 
+      position: 0, 
+      colors: ['green' as TokenColor], 
+      displayColor: '#808080',
+      owner: null, 
+      label: '3', 
+      isFaceUp: false 
+    }
+  ]
+};
+
+
+
+// -------------テストデータ------------------------------------------
 // カードデータのテスト用サンプル
 export const testHandCards: Card[] = [
   {

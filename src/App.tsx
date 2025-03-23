@@ -2,12 +2,15 @@ import React from 'react';
 import logo from './logo.svg';
 import './App.css';
 import WatergateTrack from './components/WaterGateTrack';
+import { GameProvider } from './contexts/GameContexts';
 
 function App() {
   return (
-    <div className="App">
-      <WatergateTrack/>
-    </div>
+    <GameProvider>
+      <div className="App">
+        <WatergateTrack/>
+      </div>
+    </GameProvider>
   );
 }
 

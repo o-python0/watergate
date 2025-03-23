@@ -1,5 +1,6 @@
 import React, { useRef, useEffect, useState } from 'react';
 import { testHandCards } from '../constants';
+import { useGame } from '../contexts/GameContexts';
 import HandCards from './playerArea/HandsCards';
 
 // 型定義
@@ -43,42 +44,9 @@ interface WatergateTrackProps {
 }
 
 const WatergateTrack: React.FC<WatergateTrackProps> = ({ initialState, onTokenMove }) => {
+  const { gameState } = useGame();
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
-  const [animating, setAnimating] = useState<boolean>(false);
   
-  // ゲーム状態
-  const [gameState, setGameState] = useState<GameState>(initialState || {
-    // トラックの設定
-    track: {
-      x: 300, // トラックのx座標（中心）
-      yStart: 50, // トラックの開始y座標
-      yEnd: 350, // トラックの終了y座標
-      width: 120, // トラックの幅
-      cells: 11 // マス目の数（-5から+5まで）
-    },
-    // イニシアチブマーカー（白い丸）
-    initiativeMarker: {
-      position: 0, // -5から+5の範囲（0が中央）、整数値のみ
-      radius: 15,
-      color: '#ffffff',
-      border: '#2c3e50',
-      label: 'I'
-    },
-    // 勢力トークン（赤い丸）
-    powerToken: {
-      position: -2,
-      radius: 15,
-      color: '#e74c3c',
-      border: '#2c3e50',
-      label: 'P'
-    },
-    // 証拠トークン（四角形）
-    evidenceTokens: [
-      { id: 1, position: -3, color: '#e74c3c', owner: null, label: '1', shape: 'square' },
-      { id: 2, position: 0, color: '#3498db', owner: null, label: '2', shape: 'square' },
-      { id: 3, position: 2, color: '#2ecc71', owner: null, label: '3', shape: 'square' }
-    ]
-  });
 
   // キャンバス描画
   useEffect(() => {
@@ -239,97 +207,6 @@ const WatergateTrack: React.FC<WatergateTrackProps> = ({ initialState, onTokenMo
     }
     
   }, [gameState]);
-
-  // トークン移動の共通関数
-  const moveTokenBySteps = (tokenType: TokenType, tokenId: number | null, steps: number): void => {
-    if (animating || steps === 0) return;
-    setAnimating(true);
-    
-    let currentPosition: number;
-    let updateFunction: (nextPosition: number) => void;
-    
-    // トークンタイプに応じた処理を設定
-    if (tokenType === 'initiative') {
-      currentPosition = Math.round(gameState.initiativeMarker.position);
-      updateFunction = (nextPosition) => setGameState(prev => ({
-        ...prev,
-        initiativeMarker: {
-          ...prev.initiativeMarker,
-          position: nextPosition
-        }
-      }));
-    } else if (tokenType === 'power') {
-      currentPosition = Math.round(gameState.powerToken.position);
-      updateFunction = (nextPosition) => setGameState(prev => ({
-        ...prev,
-        powerToken: {
-          ...prev.powerToken,
-          position: nextPosition
-        }
-      }));
-    } else if (tokenType === 'evidence' && tokenId !== null) {
-      const token = gameState.evidenceTokens.find(t => t.id === tokenId);
-      if (!token) {
-        setAnimating(false);
-        return;
-      }
-      currentPosition = Math.round(token.position);
-      updateFunction = (nextPosition) => setGameState(prev => ({
-        ...prev,
-        evidenceTokens: prev.evidenceTokens.map(t => 
-          t.id === tokenId ? { ...t, position: nextPosition } : t
-        )
-      }));
-    } else {
-      setAnimating(false);
-      return;
-    }
-    
-    // 新しい位置を計算（範囲内に収める）
-    const newPosition = Math.max(-5, Math.min(5, currentPosition + steps));
-    
-    // 移動が不要な場合はスキップ
-    if (currentPosition === newPosition) {
-      setAnimating(false);
-      return;
-    }
-    
-    const distance = newPosition - currentPosition;
-    const absoluteSteps = Math.abs(distance);
-    
-    // ステップごとに移動するアニメーション
-    let currentStep = 0;
-    const stepDuration = 200; // 各ステップの時間（ミリ秒）
-    
-    const animateStep = (): void => {
-      currentStep++;
-      
-      // 次の位置を計算（1マスずつ移動）
-      const nextPosition = distance > 0 
-        ? currentPosition + currentStep 
-        : currentPosition - currentStep;
-      
-      updateFunction(nextPosition);
-      
-      // まだステップが残っていれば続行
-      if (currentStep < absoluteSteps) {
-        setTimeout(animateStep, stepDuration);
-      } else {
-        setAnimating(false);
-        // アニメーション完了時にコールバックを呼び出す
-        if (onTokenMove) {
-          onTokenMove(tokenType, tokenId, newPosition);
-        }
-      }
-    };
-    
-    // アニメーション開始
-    if (absoluteSteps > 0) {
-      setTimeout(animateStep, 10);
-    } else {
-      setAnimating(false);
-    }
-  };
   
 
   return (

@@ -14,6 +14,7 @@ export type ActionEffectType =
 
 // アクションパートの情報
 export interface ActionPart {
+  actionType: "event" | "conspirator" | "journalist";
   effectType: ActionEffectType;
   description: string; // 効果の説明文
   value: number; // 効果の値（移動量、カード枚数など）
@@ -22,14 +23,14 @@ export interface ActionPart {
 // 数値パートの情報
 export interface ValuePart {
   value: number; // カードの数値
-  description: string; // 数値効果の説明
   tokenColors: TokenColor[]; // 証拠トークンの色制約
 }
 
 // カードの基本情報
-export interface Card {
+export interface CardInfo {
   id: string;
   name: string;
+  color: string;
   image?: string;
   actionPart: ActionPart; // アクションパートの情報
   valuePart: ValuePart; // 数値パートの情報

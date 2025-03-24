@@ -1,5 +1,4 @@
 import React, { useRef, useEffect, useState } from "react";
-import { testHandCards } from "../constants";
 import { EvidenceToken, GameState } from "../constants/types";
 import { useGame } from "../contexts/GameContexts";
 import HandCards from "./playerArea/HandsCards";

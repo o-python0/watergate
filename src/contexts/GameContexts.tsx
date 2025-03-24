@@ -139,6 +139,7 @@ export const GameProvider: React.FC<{
 
     // トークンタイプに応じた処理を設定
     if (tokenType === "initiative") {
+      // イニシアチブ
       currentPosition = Math.round(gameState.initiativeMarker.position);
       updateFunction = (nextPosition) => {
         // イニシアチブトークンが端に到達したかチェック
@@ -160,6 +161,7 @@ export const GameProvider: React.FC<{
         }
       };
     } else if (tokenType === "power") {
+      // 勢力
       currentPosition = Math.round(gameState.powerToken.position);
       updateFunction = (nextPosition) => {
         // 勢力トークンが端に到達したかチェック

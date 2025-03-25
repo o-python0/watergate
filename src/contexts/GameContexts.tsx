@@ -22,14 +22,6 @@ import {
   TOKEN_INITIAL_POSITION,
 } from "../constants/index";
 
-// 獲得されたトークンを管理するための型
-export interface CapturedToken {
-  type: "initiative" | "power"; // トークンタイプ
-  position: number; // 獲得時の位置
-  capturedAt: Date; // 獲得時刻
-  capturedBy: string; // 獲得したプレイヤー (PLAYERS.NIXON or PLAYERS.EDITOR)
-}
-
 // コンテキストの型定義
 interface GameContextType {
   gameState: GameState;
@@ -42,7 +34,6 @@ interface GameContextType {
   getEvidenceTokenIdByColor: (colorName: TokenColor) => number | string;
   flipTokenFaceUp: (tokenId: number | string) => void;
   findFaceDownTokenWithColor: (colorName: TokenColor) => number | string;
-  capturedTokens: CapturedToken[]; // 獲得されたトークンの配列
   animating: boolean;
   localPlayerRole: PlayerRole;
   getPlayerById: (playerId: string) => PlayerInfo | undefined;
@@ -68,7 +59,7 @@ export const GameProvider: React.FC<{
     // playersがなければ初期化
     if (!state.players) {
       state.players = {
-        player1: { id: "player1", role: PlayerRole.NIXON }, // 直接デフォルト値を使用
+        player1: { id: "player1", role: PlayerRole.NIXON },
       };
     }
     return state;
@@ -96,7 +87,6 @@ export const GameProvider: React.FC<{
   );
 
   const [animating, setAnimating] = useState<boolean>(false);
-  const [capturedTokens, setCapturedTokens] = useState<CapturedToken[]>([]);
 
   // トークンを表向きにする関数
   const flipTokenFaceUp = (tokenId: number | string): void => {
@@ -124,49 +114,41 @@ export const GameProvider: React.FC<{
     return token ? token.id : "";
   };
 
+  // トークン獲得処理の関数
   const captureToken = (
     tokenType: "initiative" | "power",
     position: number
   ): void => {
-    // 獲得したプレイヤーを判定
-    const isAtNixonSide = position <= NIXON_CAPTURE_POSITION;
-    const isAtEditorSide = position >= EDITOR_CAPTURE_POSITION;
+    // 獲得した陣営を判定
+    const isNixonCapture = position === NIXON_CAPTURE_POSITION;
+    const isEditorCapture = position === EDITOR_CAPTURE_POSITION;
 
-    if (!isAtNixonSide && !isAtEditorSide) {
-      return; // 獲得条件を満たさない場合は何もしない
-    }
+    if (!isNixonCapture && !isEditorCapture) return;
 
-    const capturingPlayer = isAtNixonSide ? PLAYERS.NIXON : PLAYERS.EDITOR;
+    // 獲得プレイヤーのIDを決定
+    const capturingPlayerId = isNixonCapture ? "player1" : "player2";
 
-    // 獲得記録を追加
-    setCapturedTokens((prev) => [
-      ...prev,
-      {
-        type: tokenType,
-        position: position,
-        capturedAt: new Date(),
-        capturedBy: capturingPlayer,
-      },
-    ]);
-    // トークンを初期位置に戻す
-    if (tokenType === "initiative") {
-      setGameState((prev) => ({
-        ...prev,
-        initiativeMarker: {
-          ...prev.initiative,
-          position: TOKEN_INITIAL_POSITION,
-        },
-      }));
-    } else {
-      // power
-      setGameState((prev) => ({
-        ...prev,
-        powerToken: {
-          ...prev.power,
-          position: TOKEN_INITIAL_POSITION,
-        },
-      }));
-    }
+    setGameState((prev) => {
+      const updatedState = { ...prev };
+
+      // トークンの所有者を更新
+      if (tokenType === "initiative") {
+        updatedState.initiative.owner = capturingPlayerId;
+      } else if (tokenType === "power") {
+        updatedState.power.owner = capturingPlayerId;
+      }
+
+      // プレイヤーの獲得トークン情報を更新
+      const currentPlayerInfo = updatedState.players[capturingPlayerId];
+
+      // 今ラウンドで獲得したトークンに追加
+      currentPlayerInfo.roundCapturedTokens = [
+        ...(currentPlayerInfo.roundCapturedTokens || []),
+        tokenType,
+      ];
+
+      return updatedState;
+    });
   };
 
   // トークン移動関数
@@ -221,7 +203,6 @@ export const GameProvider: React.FC<{
           setGameState((prev) => ({
             ...prev,
             power: {
-              // powerTokenではなくpowerに修正
               ...prev.power,
               position: nextPosition,
             },
@@ -310,7 +291,6 @@ export const GameProvider: React.FC<{
     getEvidenceTokenIdByColor,
     flipTokenFaceUp,
     findFaceDownTokenWithColor,
-    capturedTokens,
     animating,
     localPlayerRole,
     getPlayerById,

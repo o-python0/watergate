@@ -1,17 +1,6 @@
 import { RefObject } from "react";
-import { GameState, TokenColor } from "../constants/types";
+import { GameState, Token, TokenColor } from "../constants/types";
 import { drawTokenColors } from "./tokenUtils";
-
-type Token = {
-  id: string | number;
-  type: "evidence" | "power" | "initiative";
-  position: number;
-  colors?: TokenColor[];
-  displayColor: string;
-  border?: string;
-  label: string;
-  isFaceUp?: boolean;
-};
 
 const calculateTokenPosition = (position: number, cellHeight: number) => {
   return (5 - position) * cellHeight + cellHeight / 2;
@@ -50,6 +39,29 @@ const drawTrack = (
       y + cellHeight / 2
     );
   }
+};
+
+const drawCircleToken = (
+  ctx: CanvasRenderingContext2D,
+  token: Token,
+  tokenX: number,
+  y: number
+) => {
+  const tokenSize = 18;
+  ctx.beginPath();
+  ctx.arc(tokenX, y, tokenSize, 0, Math.PI * 2);
+  ctx.fillStyle = token.displayColor;
+  ctx.fill();
+  ctx.strokeStyle = token.border || "#2c3e50";
+  ctx.lineWidth = 2;
+  ctx.stroke();
+
+  // ラベルの描画
+  ctx.fillStyle = token.type === "power" ? "#ffffff" : "#000000";
+  ctx.font = "bold 14px Arial";
+  ctx.textAlign = "center";
+  ctx.textBaseline = "middle";
+  ctx.fillText(token.label, tokenX, y);
 };
 
 const drawEvidenceToken = (
@@ -100,44 +112,46 @@ const drawInvestigationTrack = (
   const ctx = canvas.getContext("2d");
   if (!ctx) return;
 
+  // キャンバスのサイズ調整
   const parent = canvas.parentElement;
   if (parent) {
     canvas.width = parent.clientWidth - 10;
     canvas.height = parent.clientHeight - 10;
   }
 
+  // 背景を白で塗りつぶし
   ctx.fillStyle = "#ffffff";
   ctx.fillRect(0, 0, canvas.width, canvas.height);
 
+  // トラックの描画
   drawTrack(ctx, canvas);
 
-  const tokens = [gameState.initiative, gameState.power, ...gameState.evidence];
+  // オーナーがいないトークンのみをフィルタリング
+  const tokens = [
+    { ...gameState.initiative, type: "initiative" as const },
+    { ...gameState.power, type: "power" as const },
+    ...gameState.evidence,
+  ].filter((token) => token.owner === null);
+
+  // トークン配置の計算
   const tokenSpacing = 40;
   const totalWidth = tokens.length * tokenSpacing;
 
+  // トークンの描画
   tokens.forEach((token, index) => {
     const cellHeight = canvas.height / 11;
     const y = calculateTokenPosition(token.position, cellHeight);
     const xOffset = index * tokenSpacing - totalWidth / 2 + tokenSpacing / 2;
     const tokenX = canvas.width / 2 + xOffset;
 
-    if (token.type === "evidence") {
-      drawEvidenceToken(ctx, token, tokenX, y);
-    } else {
-      const tokenSize = 18;
-      ctx.beginPath();
-      ctx.arc(tokenX, y, tokenSize, 0, Math.PI * 2);
-      ctx.fillStyle = token.displayColor;
-      ctx.fill();
-      ctx.strokeStyle = token.border || "#2c3e50";
-      ctx.lineWidth = 2;
-      ctx.stroke();
-      // ラベルの描画
-      ctx.fillStyle = token.type === "power" ? "#ffffff" : "#000000";
-      ctx.font = "bold 14px Arial";
-      ctx.textAlign = "center";
-      ctx.textBaseline = "middle";
-      ctx.fillText(token.label, tokenX, y);
+    switch (token.type) {
+      case "initiative":
+      case "power":
+        drawCircleToken(ctx, token, tokenX, y);
+        break;
+      case "evidence":
+        drawEvidenceToken(ctx, token, tokenX, y);
+        break;
     }
   });
 };

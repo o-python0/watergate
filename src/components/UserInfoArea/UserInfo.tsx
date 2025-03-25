@@ -5,7 +5,6 @@ import {
   DiscardCardIcon,
   ExcludedCardIcon,
 } from "../../assets/icons";
-import { PLAYERS } from "../../constants";
 import { PlayerRole } from "../../constants/types";
 import { useGame } from "../../contexts/GameContexts";
 import RoundCapturedTokens from "./RoundCaputuredTokens";
@@ -15,7 +14,7 @@ interface Props {
 }
 
 const UserInfo: React.FC<Props> = ({ isLocalPlayer }) => {
-  const { gameState, localPlayerRole, capturedTokens } = useGame();
+  const { gameState, localPlayerRole } = useGame();
 
   // プレイヤータイプに応じた設定
   const isNixon = localPlayerRole === PlayerRole.NIXON;
@@ -62,11 +61,6 @@ const UserInfo: React.FC<Props> = ({ isLocalPlayer }) => {
       ? "text-blue-800"
       : "text-red-800";
 
-  // 該当プレイヤーの獲得トークン数
-  const playerCapturedTokens = capturedTokens.filter(
-    (token) => token.capturedBy === (isNixon ? PLAYERS.NIXON : PLAYERS.EDITOR)
-  );
-
   return (
     <div className={`${bgColor} rounded border ${borderColor} h-full p-2`}>
       <h3
@@ -79,8 +73,7 @@ const UserInfo: React.FC<Props> = ({ isLocalPlayer }) => {
         {/* 今ラウンドで獲得したトークン */}
         <div className="bg-gray-200 p-1 rounded">
           <RoundCapturedTokens
-            capturedTokens={["initiative", "power"]}
-            // capturedTokens={playerInfo.roundCapturedTokens}
+            capturedTokens={playerInfo.roundCapturedTokens}
           />
         </div>
 

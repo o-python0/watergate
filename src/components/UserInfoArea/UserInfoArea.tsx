@@ -5,8 +5,6 @@ import InformantsArea from "./InformantsArea";
 import { useGame } from "../../contexts/GameContexts";
 
 const UserInfoArea: React.FC = () => {
-  const { capturedTokens } = useGame();
-
   return (
     <div className="h-full flex flex-col">
       {/* 相手側のプレイヤー情報 */}

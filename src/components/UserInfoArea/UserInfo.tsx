@@ -1,21 +1,66 @@
 // src/components/UserInfo.tsx
 import React from "react";
+import {
+  DeckCardIcon,
+  DiscardCardIcon,
+  ExcludedCardIcon,
+} from "../../assets/icons";
 import { PLAYERS } from "../../constants";
+import { PlayerRole } from "../../constants/types";
 import { useGame } from "../../contexts/GameContexts";
+import RoundCapturedTokens from "./RoundCaputuredTokens";
 
-interface UserInfoProps {
-  playerType: "nixon" | "editor";
+interface Props {
+  isLocalPlayer?: boolean;
 }
 
-const UserInfo: React.FC<UserInfoProps> = ({ playerType }) => {
-  const { capturedTokens } = useGame();
+const UserInfo: React.FC<Props> = ({ isLocalPlayer }) => {
+  const { gameState, localPlayerRole, capturedTokens } = useGame();
 
   // プレイヤータイプに応じた設定
-  const isNixon = playerType === "nixon";
-  const playerLabel = isNixon ? "ニクソン側" : "編集者側";
-  const bgColor = isNixon ? "bg-red-100" : "bg-blue-100";
-  const borderColor = isNixon ? "border-red-300" : "border-blue-300";
-  const textColor = isNixon ? "text-red-800" : "text-blue-800";
+  const isNixon = localPlayerRole === PlayerRole.NIXON;
+  const currentPlayerId = isLocalPlayer
+    ? isNixon
+      ? "player1"
+      : "player2"
+    : isNixon
+      ? "player2"
+      : "player1";
+
+  const playerInfo = gameState.players[currentPlayerId];
+
+  // isLocalPlayerによって表示を切り替え
+  const playerLabel = isLocalPlayer
+    ? isNixon
+      ? "ニクソン側"
+      : "編集者側"
+    : isNixon
+      ? "編集者側"
+      : "ニクソン側";
+
+  const bgColor = isLocalPlayer
+    ? isNixon
+      ? "bg-red-100"
+      : "bg-blue-100"
+    : isNixon
+      ? "bg-blue-100"
+      : "bg-red-100";
+
+  const borderColor = isLocalPlayer
+    ? isNixon
+      ? "border-red-300"
+      : "border-blue-300"
+    : isNixon
+      ? "border-blue-300"
+      : "border-red-300";
+
+  const textColor = isLocalPlayer
+    ? isNixon
+      ? "text-red-800"
+      : "text-blue-800"
+    : isNixon
+      ? "text-blue-800"
+      : "text-red-800";
 
   // 該当プレイヤーの獲得トークン数
   const playerCapturedTokens = capturedTokens.filter(
@@ -33,31 +78,24 @@ const UserInfo: React.FC<UserInfoProps> = ({ playerType }) => {
       <div className="grid grid-cols-1 gap-1 text-sm">
         {/* 今ラウンドで獲得したトークン */}
         <div className="bg-gray-200 p-1 rounded">
-          <div className="font-medium">今ラウンドで獲得したトークン</div>
-          <div className="text-gray-600 text-xs">なし</div>
+          <RoundCapturedTokens
+            capturedTokens={["initiative", "power"]}
+            // capturedTokens={playerInfo.roundCapturedTokens}
+          />
         </div>
 
-        {/* 捨て札 */}
-        <div className="bg-gray-200 p-1 rounded">
-          <div className="font-medium">捨て札</div>
-          <div className="text-gray-600 text-xs">0枚</div>
-        </div>
-
-        {/* 除外カード数 */}
-        <div className="bg-gray-200 p-1 rounded">
-          <div className="font-medium">除外カード数</div>
-          <div className="text-gray-600 text-xs">0枚</div>
+        {/* 各カード枚数情報 */}
+        <div className="bg-gray-200 p-1 rounded flex justify-around items-center">
+          <DeckCardIcon count={playerInfo.remainingDeckCards} />
+          <DiscardCardIcon count={playerInfo.discardedCards} />
+          <ExcludedCardIcon count={playerInfo.excludedCards} />
         </div>
 
         {/* 勢力トークン獲得数 */}
         <div className="bg-gray-200 p-1 rounded">
           <div className="font-medium">勢力トークン獲得数</div>
           <div className="text-gray-600 text-xs">
-            {
-              playerCapturedTokens.filter((token) => token.type === "power")
-                .length
-            }
-            個
+            {playerInfo.powerTokensCaptured}個
           </div>
         </div>
       </div>

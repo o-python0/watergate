@@ -1,7 +1,19 @@
 // src/contexts/GameContext.tsx
 
-import React, { createContext, useContext, useState } from "react";
-import { GameState, TokenColor, TokenType } from "../constants/types";
+import React, {
+  createContext,
+  useCallback,
+  useContext,
+  useMemo,
+  useState,
+} from "react";
+import {
+  GameState,
+  PlayerInfo,
+  PlayerRole,
+  TokenColor,
+  TokenType,
+} from "../constants/types";
 import {
   DEFAULT_GAME_STATE,
   NIXON_CAPTURE_POSITION,
@@ -32,6 +44,9 @@ interface GameContextType {
   findFaceDownTokenWithColor: (colorName: TokenColor) => number | string;
   capturedTokens: CapturedToken[]; // 獲得されたトークンの配列
   animating: boolean;
+  localPlayerRole: PlayerRole;
+  getPlayerById: (playerId: string) => PlayerInfo | undefined;
+  isLocalPlayer: (playerId: string) => boolean;
 }
 
 // コンテキストの作成
@@ -41,10 +56,45 @@ const GameContext = createContext<GameContextType | null>(null);
 export const GameProvider: React.FC<{
   children: React.ReactNode;
   initialState?: GameState;
+  initalRole?: PlayerRole;
 }> = ({ children, initialState }) => {
-  const [gameState, setGameState] = useState<GameState>(
-    initialState || DEFAULT_GAME_STATE
+  // 状態初期化
+  const [gameState, setGameState] = useState<GameState>(() => {
+    const state = initialState || DEFAULT_GAME_STATE;
+    // localPlayerIdがなければ初期化
+    if (!state.localPlayerId) {
+      state.localPlayerId = "player1";
+    }
+    // playersがなければ初期化
+    if (!state.players) {
+      state.players = {
+        player1: { id: "player1", role: PlayerRole.NIXON }, // 直接デフォルト値を使用
+      };
+    }
+    return state;
+  });
+
+  // ローカルプレイヤーのロールを取得
+  const localPlayerRole = useMemo(() => {
+    return gameState.players[gameState.localPlayerId]?.role || PlayerRole.NIXON; // デフォルト値を直接指定
+  }, [gameState.players, gameState.localPlayerId]);
+
+  // プレイヤー取得関数
+  const getPlayerById = useCallback(
+    (playerId: string) => {
+      return gameState.players[playerId];
+    },
+    [gameState.players]
   );
+
+  // ローカルプレイヤーチェック関数
+  const isLocalPlayer = useCallback(
+    (playerId: string) => {
+      return playerId === gameState.localPlayerId;
+    },
+    [gameState.localPlayerId]
+  );
+
   const [animating, setAnimating] = useState<boolean>(false);
   const [capturedTokens, setCapturedTokens] = useState<CapturedToken[]>([]);
 
@@ -262,6 +312,9 @@ export const GameProvider: React.FC<{
     findFaceDownTokenWithColor,
     capturedTokens,
     animating,
+    localPlayerRole,
+    getPlayerById,
+    isLocalPlayer,
   };
 
   return (

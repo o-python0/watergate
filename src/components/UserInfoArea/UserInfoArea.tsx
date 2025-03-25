@@ -9,9 +9,9 @@ const UserInfoArea: React.FC = () => {
 
   return (
     <div className="h-full flex flex-col">
-      {/* ニクソン側プレイヤー情報（上部） */}
+      {/* 相手側のプレイヤー情報 */}
       <div className="h-1/4 mb-2 min-h-[150px]">
-        <UserInfo playerType="nixon" />
+        <UserInfo />
       </div>
 
       {/* 情報提供者エリア（中央） */}
@@ -19,9 +19,9 @@ const UserInfoArea: React.FC = () => {
         <InformantsArea />
       </div>
 
-      {/* 編集者側プレイヤー情報（下部） */}
+      {/* 自分側のプレイヤー情報 */}
       <div className="h-1/4 mt-2 min-h-[150px]">
-        <UserInfo playerType="editor" />
+        <UserInfo isLocalPlayer />
       </div>
     </div>
   );

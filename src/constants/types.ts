@@ -1,5 +1,11 @@
 // types.ts
 
+// プレイヤーのロールを定義
+export enum PlayerRole {
+  NIXON = "nixon",
+  EDITOR = "editor",
+}
+
 // トークンカラーの型
 export type TokenColor = "red" | "blue" | "green";
 
@@ -78,4 +84,20 @@ export interface GameState {
   initiative: Token;
   power: Token;
   evidence: Token[];
+  players: {
+    [playerId: string]: PlayerInfo;
+  };
+  localPlayerId: string;
+}
+
+export interface PlayerInfo {
+  id: string;
+  role: PlayerRole;
+  name?: string;
+
+  roundCapturedTokens?: string[]; // 今ラウンドで獲得したトークン
+  discardedCards?: number; // 捨て札の枚数
+  excludedCards?: number; // 除外カードの枚数
+  powerTokensCaptured?: number; // 勢力トークン獲得数
+  remainingDeckCards?: number; // 残りデッキ枚数
 }

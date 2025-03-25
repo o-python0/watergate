@@ -1,7 +1,6 @@
-// src/components/Card.tsx
 import React from "react";
 import { CardInfo, TokenColor } from "../../constants/types";
-import { getColorHex } from "../../utils/colorUtils";
+import { getColorHex } from "../../utils/tokenUtils";
 
 interface Props {
   card: CardInfo;

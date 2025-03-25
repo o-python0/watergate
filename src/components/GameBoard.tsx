@@ -1,15 +1,10 @@
-// src/components/GameBoard.tsx
 import React from "react";
-import { useGame } from "../contexts/GameContexts";
 import EvidenceBoard from "./EvidenceBoard/EvidenveBoard";
 import InvestigationTrack from "./InvestigationTrack/InvestigationTrack";
 import PlayerCardsArea from "./PlayerCardsArea/PlayerCardsArea";
 import UserInfoArea from "./UserInfoArea/UserInfoArea";
-import WatergateTrack from "./WaterGateTrack";
 
 const GameBoard: React.FC = () => {
-  const { gameState } = useGame();
-
   return (
     <div className="h-screen w-screen flex flex-col bg-gray-900 p-2 overflow-hidden">
       {/* メインエリア（上部） */}
@@ -35,7 +30,6 @@ const GameBoard: React.FC = () => {
         {/* 右エリア：調査トラック */}
         <div className="w-1/5 h-full overflow-hidden">
           <InvestigationTrack />
-          {/* <WatergateTrack /> */}
         </div>
       </div>
     </div>

@@ -1,6 +1,6 @@
-import React, { useState } from "react";
+import React from "react";
 import { useGame } from "../../contexts/GameContexts";
-import { CardInfo, TokenColor } from "../../constants/types";
+import { CardInfo } from "../../constants/types";
 import Card from "./Card";
 import { TEST_HAND_CARDS } from "../../constants";
 import TokenTypeSelectorModal, {
@@ -9,6 +9,8 @@ import TokenTypeSelectorModal, {
 import TokenActionSelectorModal, {
   TokenAction,
 } from "./modal/TokenActionSelectorModal";
+import { useTokenTypeSelector } from "../../hooks/modals/useTokenTypeSelector";
+import { useTokenActionSelector } from "../../hooks/modals/useTokenActionSelector";
 
 type Props = {
   onPlayActionPart?: (cardId: string) => void;
@@ -26,11 +28,24 @@ const PlayerCardsArea: React.FC<Props> = ({
     animating,
   } = useGame();
 
-  const [selectedCard, setSelectedCard] = useState<CardInfo | null>(null);
-  const [showTypeSelector, setShowTypeSelector] = useState<boolean>(false);
-  const [showActionSelector, setShowActionSelector] = useState<boolean>(false);
-  const [selectedColor, setSelectedColor] = useState<TokenColor | null>(null);
-  const [challengeFailed, setChallengeFailed] = useState<boolean>(false);
+  // 1段階目のモーダルのフック
+  const {
+    showTypeSelector,
+    selectedCard: typeSelectorCard,
+    challengeFailed,
+    openTypeSelector,
+    closeTypeSelector,
+    setFailedChallenge,
+  } = useTokenTypeSelector();
+
+  // 2段階目のモーダルのフック
+  const {
+    showActionSelector,
+    selectedCard: actionSelectorCard,
+    selectedColor,
+    openActionSelector,
+    closeActionSelector,
+  } = useTokenActionSelector();
 
   // アクションパート実行関数
   const handleActionPartClick = (card: CardInfo) => {
@@ -41,109 +56,76 @@ const PlayerCardsArea: React.FC<Props> = ({
   // 数値パート実行関数
   const handleValuePartClick = (card: CardInfo) => {
     if (animating) return;
-    setSelectedCard(card);
-    setShowTypeSelector(true);
+    openTypeSelector(card);
   };
 
   // トークンタイプを選択したときの処理
   const handleTypeSelect = (selection: TokenSelection) => {
-    if (!selectedCard) return;
+    if (!typeSelectorCard) return;
 
-    const { value } = selectedCard.valuePart;
+    const { value } = typeSelectorCard.valuePart;
 
     switch (selection.type) {
       case "color":
-        // 色が選択された場合、アクション選択モーダルへ
-        setSelectedColor(selection.color);
-        setShowTypeSelector(false);
-        setShowActionSelector(true);
+        if (selection.color) {
+          // 証拠トークンの場合、アクション選択モーダルへ
+          openActionSelector(typeSelectorCard, selection.color);
+          closeTypeSelector();
+        }
         break;
 
       case "initiative":
-        // イニシアチブトークンが選択された場合、直接移動
-        moveTokenBySteps("initiative", null, value);
-        completeCardPlay();
-        break;
-
       case "power":
-        // 勢力トークンが選択された場合、直接移動
-        moveTokenBySteps("power", null, value);
-        completeCardPlay();
+        // イニシアチブまたは勢力トークンの場合、直接移動
+        moveTokenBySteps(selection.type, value);
+        completeCardPlay(typeSelectorCard.id);
         break;
     }
   };
 
-  // トークンアクションを選択したときの処理
+  // 証拠トークンアクションを選択したときの処理
   const handleActionSelect = (action: TokenAction) => {
-    if (!selectedCard || selectedColor === null) return;
+    if (!actionSelectorCard || selectedColor === null) return;
 
-    const { value } = selectedCard.valuePart;
+    const { value } = actionSelectorCard.valuePart;
 
     switch (action.type) {
       case "moveToken":
         // 表向きトークンを移動
-        moveTokenBySteps("evidence", action.tokenId, value);
-        completeCardPlay();
+        moveTokenBySteps("evidence", value, action.tokenId);
+        completeCardPlay(actionSelectorCard.id);
         break;
 
       case "challenge":
         // チャレンジ処理
         const faceDownTokenId = findFaceDownTokenWithColor(selectedColor);
+
         if (faceDownTokenId !== null) {
           // トークンを表向きにして移動
           flipTokenFaceUp(faceDownTokenId);
-          moveTokenBySteps("evidence", faceDownTokenId, value);
-          completeCardPlay();
+          moveTokenBySteps("evidence", value, faceDownTokenId);
+          completeCardPlay(actionSelectorCard.id);
         } else {
           // 裏向きトークンがない場合は、トークンタイプ選択モーダルに戻る
-          setShowActionSelector(false);
-          setShowTypeSelector(true);
+          closeActionSelector();
+          openTypeSelector(actionSelectorCard);
           // 色選択の選択肢は表示しないフラグを設定
-          setChallengeFailed(true);
+          setFailedChallenge(true);
         }
         break;
     }
   };
 
   // カードプレイ完了の共通処理
-  const completeCardPlay = () => {
+  const completeCardPlay = (cardId: string) => {
     // モーダルを閉じる
-    setShowTypeSelector(false);
-    setShowActionSelector(false);
-    setChallengeFailed(false);
+    closeTypeSelector();
+    closeActionSelector();
 
     // カードプレイイベントを発火
-    if (selectedCard && onPlayValuePart) {
-      onPlayValuePart(selectedCard.id);
+    if (onPlayValuePart) {
+      onPlayValuePart(cardId);
     }
-
-    // 状態をリセット
-    resetState();
-  };
-
-  // 状態リセットの共通処理
-  const resetState = () => {
-    setSelectedCard(null);
-    setSelectedColor(null);
-  };
-
-  // 1段階目のモーダルをキャンセルしたときの処理
-  const handleTypeSelectorCancel = () => {
-    setShowTypeSelector(false);
-    resetState();
-  };
-
-  // 2段階目のモーダルを戻るボタンで閉じたときの処理
-  const handleActionSelectorBack = () => {
-    setShowActionSelector(false);
-    setSelectedColor(null);
-    setShowTypeSelector(true);
-  };
-
-  // 2段階目のモーダルをキャンセルしたときの処理
-  const handleActionSelectorCancel = () => {
-    setShowActionSelector(false);
-    resetState();
   };
 
   return (
@@ -160,24 +142,29 @@ const PlayerCardsArea: React.FC<Props> = ({
         ))}
       </div>
       {/* トークンタイプ選択モーダル (1段階目) */}
-      {showTypeSelector && selectedCard && (
+      {showTypeSelector && typeSelectorCard && (
         <TokenTypeSelectorModal
-          colors={selectedCard.valuePart.tokenColors || []}
-          steps={selectedCard.valuePart.value}
+          colors={typeSelectorCard.valuePart.tokenColors || []}
+          steps={typeSelectorCard.valuePart.value}
           onSelect={handleTypeSelect}
-          onCancel={handleTypeSelectorCancel}
+          onCancel={closeTypeSelector}
           challengeFailed={challengeFailed}
         />
       )}
 
       {/* トークンアクション選択モーダル (2段階目) */}
-      {showActionSelector && selectedCard && selectedColor && (
+      {showActionSelector && actionSelectorCard && selectedColor && (
         <TokenActionSelectorModal
           color={selectedColor}
-          steps={selectedCard.valuePart.value}
+          steps={actionSelectorCard.valuePart.value}
           onSelect={handleActionSelect}
-          onBack={handleActionSelectorBack}
-          onCancel={handleActionSelectorCancel}
+          onBack={() => {
+            closeActionSelector();
+            if (actionSelectorCard) {
+              openTypeSelector(actionSelectorCard);
+            }
+          }}
+          onCancel={closeActionSelector}
         />
       )}
     </div>

@@ -4,7 +4,6 @@ import React, { createContext, useContext, useState } from "react";
 import { GameState, TokenColor, TokenType } from "../constants/types";
 import {
   DEFAULT_GAME_STATE,
-  COLOR_TO_HEX_MAP,
   NIXON_CAPTURE_POSITION,
   EDITOR_CAPTURE_POSITION,
   PLAYERS,
@@ -25,12 +24,12 @@ interface GameContextType {
   setGameState: React.Dispatch<React.SetStateAction<GameState>>;
   moveTokenBySteps: (
     tokenType: TokenType,
-    tokenId: number | null,
-    steps: number
+    steps: number,
+    tokenId?: number | string
   ) => void;
-  getEvidenceTokenIdByColor: (colorName: TokenColor) => number | null;
-  flipTokenFaceUp: (tokenId: number) => void;
-  findFaceDownTokenWithColor: (colorName: TokenColor) => number | null;
+  getEvidenceTokenIdByColor: (colorName: TokenColor) => number | string;
+  flipTokenFaceUp: (tokenId: number | string) => void;
+  findFaceDownTokenWithColor: (colorName: TokenColor) => number | string;
   capturedTokens: CapturedToken[]; // 獲得されたトークンの配列
   animating: boolean;
 }
@@ -50,21 +49,14 @@ export const GameProvider: React.FC<{
   const [capturedTokens, setCapturedTokens] = useState<CapturedToken[]>([]);
 
   // トークンを表向きにする関数
-  const flipTokenFaceUp = (tokenId: number): void => {
+  const flipTokenFaceUp = (tokenId: number | string): void => {
     setGameState((prev) => ({
       ...prev,
-      evidenceTokens: prev.evidenceTokens.map((token) => {
+      evidence: prev.evidence.map((token) => {
         if (token.id === tokenId) {
-          // 表向きにし、表示色を実際の色に変更
-          // 複数色の場合は最初の色を表示
-          const mainColor = token.colors[0];
           return {
             ...token,
             isFaceUp: true,
-            displayColor:
-              mainColor in COLOR_TO_HEX_MAP
-                ? COLOR_TO_HEX_MAP[mainColor as TokenColor]
-                : "#808080",
           };
         }
         return token;
@@ -73,11 +65,13 @@ export const GameProvider: React.FC<{
   };
 
   // 裏向きで特定の色を持つトークンを検索する関数
-  const findFaceDownTokenWithColor = (colorName: TokenColor): number | null => {
-    const token = gameState.evidenceTokens.find(
-      (t) => !t.isFaceUp && t.colors.includes(colorName)
+  const findFaceDownTokenWithColor = (
+    colorName: TokenColor
+  ): number | string => {
+    const token = gameState.evidence.find(
+      (t) => !t.isFaceUp && t.colors!.includes(colorName)
     );
-    return token ? token.id : null;
+    return token ? token.id : "";
   };
 
   const captureToken = (
@@ -109,7 +103,7 @@ export const GameProvider: React.FC<{
       setGameState((prev) => ({
         ...prev,
         initiativeMarker: {
-          ...prev.initiativeMarker,
+          ...prev.initiative,
           position: TOKEN_INITIAL_POSITION,
         },
       }));
@@ -118,7 +112,7 @@ export const GameProvider: React.FC<{
       setGameState((prev) => ({
         ...prev,
         powerToken: {
-          ...prev.powerToken,
+          ...prev.power,
           position: TOKEN_INITIAL_POSITION,
         },
       }));
@@ -128,8 +122,8 @@ export const GameProvider: React.FC<{
   // トークン移動関数
   const moveTokenBySteps = (
     tokenType: TokenType,
-    tokenId: number | null,
-    steps: number
+    steps: number,
+    tokenId?: number | string
   ): void => {
     if (animating || steps === 0) return;
     setAnimating(true);
@@ -140,7 +134,7 @@ export const GameProvider: React.FC<{
     // トークンタイプに応じた処理を設定
     if (tokenType === "initiative") {
       // イニシアチブ
-      currentPosition = Math.round(gameState.initiativeMarker.position);
+      currentPosition = Math.round(gameState.initiative.position);
       updateFunction = (nextPosition) => {
         // イニシアチブトークンが端に到達したかチェック
         const isAtCaptureSide =
@@ -153,8 +147,8 @@ export const GameProvider: React.FC<{
           // 通常の移動
           setGameState((prev) => ({
             ...prev,
-            initiativeMarker: {
-              ...prev.initiativeMarker,
+            initiative: {
+              ...prev.initiative,
               position: nextPosition,
             },
           }));
@@ -162,7 +156,7 @@ export const GameProvider: React.FC<{
       };
     } else if (tokenType === "power") {
       // 勢力
-      currentPosition = Math.round(gameState.powerToken.position);
+      currentPosition = Math.round(gameState.power.position);
       updateFunction = (nextPosition) => {
         // 勢力トークンが端に到達したかチェック
         const isAtCaptureSide =
@@ -176,15 +170,16 @@ export const GameProvider: React.FC<{
           // 通常の移動
           setGameState((prev) => ({
             ...prev,
-            powerToken: {
-              ...prev.powerToken,
+            power: {
+              // powerTokenではなくpowerに修正
+              ...prev.power,
               position: nextPosition,
             },
           }));
         }
       };
     } else if (tokenType === "evidence" && tokenId !== null) {
-      const token = gameState.evidenceTokens.find((t) => t.id === tokenId);
+      const token = gameState.evidence.find((t) => t.id === tokenId);
       if (!token) {
         setAnimating(false);
         return;
@@ -193,7 +188,7 @@ export const GameProvider: React.FC<{
       updateFunction = (nextPosition) =>
         setGameState((prev) => ({
           ...prev,
-          evidenceTokens: prev.evidenceTokens.map((t) =>
+          evidence: prev.evidence.map((t) =>
             t.id === tokenId ? { ...t, position: nextPosition } : t
           ),
         }));
@@ -246,13 +241,15 @@ export const GameProvider: React.FC<{
   };
 
   // 色から表向きのトークンIDを取得する関数
-  const getEvidenceTokenIdByColor = (colorName: TokenColor): number | null => {
+  const getEvidenceTokenIdByColor = (
+    colorName: TokenColor
+  ): number | string => {
     // 表向きのトークンのうち、指定された色を持つものを検索
-    const token = gameState.evidenceTokens.find(
-      (t) => t.isFaceUp && t.colors.includes(colorName)
+    const token = gameState.evidence.find(
+      (t) => t.isFaceUp && t.colors!.includes(colorName)
     );
 
-    return token ? token.id : null;
+    return token ? token.id : "";
   };
 
   // コンテキスト値

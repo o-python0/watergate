@@ -1,16 +1,16 @@
 import { RefObject, useEffect } from "react";
-import { TestToken, Token } from "../constants/types";
+import { GameState } from "../constants/types";
 import { drawInvestigationTrack } from "../utils/drawnInvestigationTrack";
 
 const useCanvas = (
   canvasRef: RefObject<HTMLCanvasElement | null>,
-  tokens: TestToken[]
+  gameState: GameState
 ) => {
   useEffect(() => {
     if (canvasRef.current) {
-      drawInvestigationTrack(canvasRef, tokens);
+      drawInvestigationTrack(canvasRef, gameState);
     }
-  }, [canvasRef, tokens]);
+  }, [gameState, canvasRef]);
 };
 
 export default useCanvas;

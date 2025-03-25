@@ -1,4 +1,4 @@
-import { CardInfo, GameState, TestToken, TokenColor } from "./types";
+import { CardInfo, GameState, Token, TokenColor } from "./types";
 
 export const TOKEN_INITIAL_POSITION = 0;
 
@@ -10,12 +10,13 @@ export const COLOR_TO_HEX_MAP: Record<TokenColor, string> = {
 };
 
 // テスト用のトークン
-export const TEST_TOKENS: TestToken[] = [
+export const TEST_TOKENS: Token[] = [
   {
     id: "initiative",
     type: "initiative",
     position: TOKEN_INITIAL_POSITION,
     displayColor: "#ffffff",
+    owner: null,
     border: "#2c3e50",
     label: "I",
   },
@@ -24,6 +25,7 @@ export const TEST_TOKENS: TestToken[] = [
     type: "power",
     position: TOKEN_INITIAL_POSITION,
     displayColor: "#e74c3c",
+    owner: null,
     border: "#2c3e50",
     label: "P",
   },
@@ -33,6 +35,7 @@ export const TEST_TOKENS: TestToken[] = [
     position: TOKEN_INITIAL_POSITION,
     colors: ["red"],
     displayColor: "#808080",
+    owner: null,
     label: "1",
     isFaceUp: false,
   },
@@ -42,6 +45,7 @@ export const TEST_TOKENS: TestToken[] = [
     position: TOKEN_INITIAL_POSITION,
     colors: ["blue", "green"],
     displayColor: "#808080",
+    owner: null,
     label: "2",
     isFaceUp: true,
   },
@@ -56,23 +60,28 @@ export const DEFAULT_GAME_STATE: GameState = {
     width: 120,
     cells: 11,
   },
-  initiativeMarker: {
+  initiative: {
+    id: "initiative",
+    type: "initiative",
     position: TOKEN_INITIAL_POSITION,
-    radius: 15,
-    color: "#ffffff",
+    displayColor: "#ffffff",
     border: "#2c3e50",
     label: "I",
+    owner: null,
   },
-  powerToken: {
+  power: {
+    id: "power",
+    type: "power",
     position: TOKEN_INITIAL_POSITION,
-    radius: 15,
-    color: "#e74c3c",
+    displayColor: "#c0392b",
     border: "#2c3e50",
     label: "P",
+    owner: null,
   },
-  evidenceTokens: [
+  evidence: [
     {
       id: 1,
+      type: "evidence",
       position: TOKEN_INITIAL_POSITION,
       colors: ["red" as TokenColor],
       displayColor: "#808080",
@@ -82,6 +91,7 @@ export const DEFAULT_GAME_STATE: GameState = {
     },
     {
       id: 2,
+      type: "evidence",
       position: TOKEN_INITIAL_POSITION,
       colors: ["blue" as TokenColor],
       displayColor: "#808080",
@@ -91,8 +101,9 @@ export const DEFAULT_GAME_STATE: GameState = {
     },
     {
       id: 3,
+      type: "evidence",
       position: TOKEN_INITIAL_POSITION,
-      colors: ["green" as TokenColor],
+      colors: ["blue", "green" as TokenColor],
       displayColor: "#808080",
       owner: null,
       label: "3",

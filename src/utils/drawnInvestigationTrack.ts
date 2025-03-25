@@ -1,6 +1,6 @@
 import { RefObject } from "react";
-import { COLOR_TO_HEX_MAP } from "../constants";
-import { TokenColor } from "../constants/types";
+import { GameState, TokenColor } from "../constants/types";
+import { drawTokenColors } from "./tokenUtils";
 
 type Token = {
   id: string | number;
@@ -61,7 +61,7 @@ const drawEvidenceToken = (
   const width = 30;
   const height = 40;
   if (!token.isFaceUp) {
-    // トークンが裏向きの場合
+    // 裏向きトークンの描画
     ctx.fillStyle = "#000000";
     ctx.fillRect(tokenX - width / 2, y - height / 2, width, height);
     ctx.strokeStyle = "#2c3e50";
@@ -73,32 +73,15 @@ const drawEvidenceToken = (
     ctx.textBaseline = "middle";
     ctx.fillText("?", tokenX, y);
   } else {
-    // トークンが表向きの場合
-    if (token.colors && token.colors.length > 1) {
-      // 2色の場合
-      ctx.fillStyle = COLOR_TO_HEX_MAP[token.colors[0]] || "#808080";
-      ctx.fillRect(tokenX - width / 2, y - height / 2, width, height / 2);
-      ctx.fillStyle = ctx.fillStyle =
-        COLOR_TO_HEX_MAP[token.colors[1]] || "#808080";
-      ctx.fillRect(tokenX - width / 2, y, width, height / 2);
-      ctx.strokeStyle = "#2c3e50";
-      ctx.lineWidth = 2;
-      ctx.strokeRect(tokenX - width / 2, y - height / 2, width, height);
-      ctx.beginPath();
-      ctx.moveTo(tokenX - width / 2, y);
-      ctx.lineTo(tokenX + width / 2, y);
-      ctx.strokeStyle = "#2c3e50";
-      ctx.lineWidth = 1;
-      ctx.stroke();
-    } else {
-      // 単色の場合
-      ctx.fillStyle =
-        COLOR_TO_HEX_MAP[token.colors?.[0] as TokenColor] || "#808080";
-      ctx.fillRect(tokenX - width / 2, y - height / 2, width, height);
-      ctx.strokeStyle = "#2c3e50";
-      ctx.lineWidth = 2;
-      ctx.strokeRect(tokenX - width / 2, y - height / 2, width, height);
-    }
+    // 表向きトークンの描画
+    drawTokenColors(ctx, tokenX, y, width, height, token.colors);
+
+    // 枠線を描画
+    ctx.strokeStyle = "#2c3e50";
+    ctx.lineWidth = 2;
+    ctx.strokeRect(tokenX - width / 2, y - height / 2, width, height);
+
+    // ラベルを描画
     ctx.fillStyle = "#ffffff";
     ctx.font = "bold 14px Arial";
     ctx.textAlign = "center";
@@ -109,7 +92,7 @@ const drawEvidenceToken = (
 
 const drawInvestigationTrack = (
   canvasRef: RefObject<HTMLCanvasElement | null>,
-  tokens: Token[]
+  gameState: GameState
 ) => {
   const canvas = canvasRef.current;
   if (!canvas) return;
@@ -128,7 +111,8 @@ const drawInvestigationTrack = (
 
   drawTrack(ctx, canvas);
 
-  const tokenSpacing = 48;
+  const tokens = [gameState.initiative, gameState.power, ...gameState.evidence];
+  const tokenSpacing = 40;
   const totalWidth = tokens.length * tokenSpacing;
 
   tokens.forEach((token, index) => {
@@ -140,14 +124,15 @@ const drawInvestigationTrack = (
     if (token.type === "evidence") {
       drawEvidenceToken(ctx, token, tokenX, y);
     } else {
+      const tokenSize = 18;
       ctx.beginPath();
-      ctx.arc(tokenX, y, 20, 0, Math.PI * 2);
+      ctx.arc(tokenX, y, tokenSize, 0, Math.PI * 2);
       ctx.fillStyle = token.displayColor;
       ctx.fill();
       ctx.strokeStyle = token.border || "#2c3e50";
       ctx.lineWidth = 2;
       ctx.stroke();
-
+      // ラベルの描画
       ctx.fillStyle = token.type === "power" ? "#ffffff" : "#000000";
       ctx.font = "bold 14px Arial";
       ctx.textAlign = "center";

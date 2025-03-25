@@ -39,23 +39,17 @@ export interface CardInfo {
 // トークンタイプ定義
 export type TokenType = "initiative" | "power" | "evidence";
 
-// 基本トークン型
-export interface Token {
-  position: number;
-  radius: number;
-  color: string;
-  border: string;
-  label: string;
-}
-export type TestToken = {
+// トークン型
+export type Token = {
   id: string | number;
   type: "evidence" | "power" | "initiative";
   position: number;
-  colors?: TokenColor[];
+  colors?: TokenColor[]; // initiative, powerは持たない
   displayColor: string;
+  owner: string | null;
   border?: string;
   label: string;
-  isFaceUp?: boolean;
+  isFaceUp?: boolean; // initiative, powerは持たない
 };
 
 // 証拠トークンの型定義
@@ -81,7 +75,7 @@ export interface TrackConfig {
 // ゲーム状態の型定義
 export interface GameState {
   track: TrackConfig;
-  initiativeMarker: Token;
-  powerToken: Token;
-  evidenceTokens: EvidenceToken[];
+  initiative: Token;
+  power: Token;
+  evidence: Token[];
 }

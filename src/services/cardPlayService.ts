@@ -1,6 +1,7 @@
 // src/services/cardPlayService.ts
 
 import { CardInfo } from "../constants/types";
+import { useGameStore } from "../store/gameStore";
 
 /**
  * カードを手札から捨て札に移動する
@@ -47,4 +48,37 @@ export const discardCard = (
     updatedDiscardedCards,
     discardedCard,
   };
+};
+
+/**
+ * カードを手札から捨て札に移動する
+ */
+export const discardCardImpl = (cardId: string): CardInfo | null => {
+  const { gameState, setGameState } = useGameStore.getState();
+  const { localPlayerId } = gameState;
+  const player = gameState.players[localPlayerId];
+
+  if (!player) return null;
+
+  const { updatedHand, updatedDiscardedCards, discardedCard } = discardCard(
+    player.hand || [],
+    player.discardedCards || [],
+    cardId
+  );
+
+  if (!discardedCard) return null;
+
+  setGameState((prev) => ({
+    ...prev,
+    players: {
+      ...prev.players,
+      [localPlayerId]: {
+        ...player,
+        hand: updatedHand,
+        discardedCards: updatedDiscardedCards,
+      },
+    },
+  }));
+
+  return discardedCard;
 };

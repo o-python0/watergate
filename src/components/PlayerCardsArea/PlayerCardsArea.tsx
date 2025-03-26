@@ -12,20 +12,15 @@ import { useTokenActionSelector } from "../../hooks/modals/useTokenActionSelecto
 import { usePlayerCards } from "../../hooks/usePlayerCards";
 import { useGameStore } from "../../store/gameStore";
 
-type Props = {
-  onPlayActionPart?: (cardId: string) => void;
-  onPlayValuePart?: (cardId: string) => void;
-};
-
-const PlayerCardsArea: React.FC<Props> = ({
-  onPlayActionPart,
-  onPlayValuePart,
-}) => {
+const PlayerCardsArea: React.FC = () => {
   const {
     gameState,
     moveToken,
     flipTokenFaceUp,
     findFaceDownTokenWithColor,
+    discardCard,
+    selectedCardId,
+    setSelectedCardId,
     animating,
   } = useGameStore();
 
@@ -65,6 +60,7 @@ const PlayerCardsArea: React.FC<Props> = ({
   // 数値パート実行関数
   const handleValuePartClick = (card: CardInfo) => {
     if (animating) return;
+    setSelectedCardId(card.id);
     openTypeSelector(card);
   };
 
@@ -86,6 +82,7 @@ const PlayerCardsArea: React.FC<Props> = ({
       case "initiative":
       case "power":
         // イニシアチブまたは勢力トークンの場合、直接移動
+        discardCard(selectedCardId);
         moveToken(selection.type, value);
         completeCardPlay(typeSelectorCard.id);
         break;
@@ -127,14 +124,12 @@ const PlayerCardsArea: React.FC<Props> = ({
 
   // カードプレイ完了の共通処理
   const completeCardPlay = (cardId: string) => {
+    // プレイしたカードを捨てる
+    discardCard(selectedCardId);
+    setSelectedCardId("");
     // モーダルを閉じる
     closeTypeSelector();
     closeActionSelector();
-
-    // カードプレイイベントを発火
-    if (onPlayValuePart) {
-      onPlayValuePart(cardId);
-    }
   };
 
   if (loading) {

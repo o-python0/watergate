@@ -5,6 +5,7 @@ import {
   TokenColor,
   PlayerInfo,
   PlayerRole,
+  CardInfo,
 } from "../constants/types";
 import { DEFAULT_GAME_STATE } from "../constants/index";
 import {
@@ -15,15 +16,19 @@ import {
   findFaceDownTokenWithColor as findFaceDownToken,
   flipTokenFaceUp as flipToken,
 } from "../services/tokenService";
+import { discardCardImpl } from "../services/cardPlayService";
 
 interface GameStore {
   // 状態
   gameState: GameState;
   animating: boolean;
   localPlayerRole: string;
+  selectedCardId: string;
 
   // 状態更新
   setGameState: (updater: React.SetStateAction<GameState>) => void;
+  // setter
+  setSelectedCardId: (cardId: string) => void;
 
   // トークン関連インターフェース
   moveToken: (
@@ -34,6 +39,9 @@ interface GameStore {
   flipTokenFaceUp: (tokenId: number | string) => void;
   findFaceDownTokenWithColor: (colorName: TokenColor) => number | string;
   getEvidenceTokenIdByColor: (colorName: TokenColor) => number | string;
+
+  // カード関連インターフェース
+  discardCard: (cardId: string) => CardInfo | null;
 
   // プレイヤー関連インターフェース
   getPlayerById: (playerId: string) => PlayerInfo | undefined;
@@ -54,6 +62,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
   localPlayerRole:
     DEFAULT_GAME_STATE.players[DEFAULT_GAME_STATE.localPlayerId]?.role ||
     PlayerRole.NIXON,
+  selectedCardId: "",
 
   // gameStateを更新する関数
   setGameState: (updater) =>
@@ -68,10 +77,11 @@ export const useGameStore = create<GameStore>((set, get) => ({
           PlayerRole.NIXON,
       };
     }),
+  // setter
+  setSelectedCardId: (cardId) => set({ selectedCardId: cardId }),
 
   getEvidence: () => get().gameState.evidence,
   // トークン関連インターフェース -------------------------------
-  // 指定のトークンを移動させる
   moveToken: (tokenType, steps, tokenId) => {
     get().moveTokenBySteps(tokenType, steps, tokenId);
   },
@@ -82,7 +92,10 @@ export const useGameStore = create<GameStore>((set, get) => ({
 
   getEvidenceTokenIdByColor: (colorName) => getTokenByColor(colorName),
 
-  // プレイヤー関連インターフェース
+  // カード関連インターフェース ---------------------------------
+  discardCard: (cardId) => discardCardImpl(cardId),
+
+  // プレイヤー関連インターフェース ------------------------------
   getPlayerById: (playerId) => {
     return get().gameState.players[playerId];
   },

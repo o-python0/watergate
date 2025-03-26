@@ -80,8 +80,8 @@ const UserInfo: React.FC<Props> = ({ isLocalPlayer }) => {
         {/* 各カード枚数情報 */}
         <div className="bg-gray-200 p-1 rounded flex justify-around items-center">
           <DeckCardIcon count={playerInfo.remainingDeckCards} />
-          <DiscardCardIcon count={playerInfo.discardedCards} />
-          <ExcludedCardIcon count={playerInfo.excludedCards} />
+          <DiscardCardIcon count={playerInfo.discardedCards?.length || 0} />
+          <ExcludedCardIcon count={playerInfo.excludedCards?.length || 0} />
         </div>
 
         {/* 勢力トークン獲得数 */}

@@ -8,6 +8,7 @@ import React, {
   useState,
 } from "react";
 import {
+  CardInfo,
   GameState,
   PlayerInfo,
   PlayerRole,
@@ -18,9 +19,9 @@ import {
   DEFAULT_GAME_STATE,
   NIXON_CAPTURE_POSITION,
   EDITOR_CAPTURE_POSITION,
-  PLAYERS,
-  TOKEN_INITIAL_POSITION,
 } from "../constants/index";
+// services
+import { discardCard } from "../services/cardPlayService";
 
 // コンテキストの型定義
 interface GameContextType {
@@ -87,6 +88,53 @@ export const GameProvider: React.FC<{
   );
 
   const [animating, setAnimating] = useState<boolean>(false);
+
+  // カードプレイ時のラップ関数
+  const playCard = (cardId: string): boolean => {
+    // カードを捨て札に移動
+    const card = discardCardFromHand(cardId);
+    if (!card) return false;
+
+    // ここでカードの効果を適用する処理を追加予定
+
+    return true;
+  };
+
+  // カードを捨てる関数
+  const discardCardFromHand = (cardId: string): CardInfo | null => {
+    const localPlayerId = gameState.localPlayerId;
+    const player = gameState.players[localPlayerId];
+
+    if (!player) return null;
+
+    const hand = player.hand || [];
+    const discardedCards = player.discardedCards || [];
+
+    // サービス関数を呼び出し
+    const { updatedHand, updatedDiscardedCards, discardedCard } = discardCard(
+      hand,
+      discardedCards,
+      cardId
+    );
+
+    // 失敗の場合
+    if (!discardedCard) return null;
+
+    // ゲーム状態を更新
+    setGameState((prev) => ({
+      ...prev,
+      players: {
+        ...prev.players,
+        [localPlayerId]: {
+          ...player,
+          hand: updatedHand,
+          discardedCards: updatedDiscardedCards,
+        },
+      },
+    }));
+
+    return discardedCard;
+  };
 
   // トークンを表向きにする関数
   const flipTokenFaceUp = (tokenId: number | string): void => {
@@ -165,7 +213,7 @@ export const GameProvider: React.FC<{
 
     // トークンタイプに応じた処理を設定
     if (tokenType === "initiative") {
-      // イニシアチブ
+      // イニシアチブトークン
       currentPosition = Math.round(gameState.initiative.position);
       updateFunction = (nextPosition) => {
         // イニシアチブトークンが端に到達したかチェック
@@ -187,7 +235,7 @@ export const GameProvider: React.FC<{
         }
       };
     } else if (tokenType === "power") {
-      // 勢力
+      // 勢力トークン
       currentPosition = Math.round(gameState.power.position);
       updateFunction = (nextPosition) => {
         // 勢力トークンが端に到達したかチェック

@@ -25,7 +25,7 @@ const Card: React.FC<Props> = ({
       {/* カード数値 */}
       <div className="bg-gray-50 flex items-center justify-center p-3">
         <span className="text-3xl font-bold text-gray-700">
-          {card.valuePart.value}
+          {Math.abs(card.valuePart.value)}
         </span>
         <div className="ml-2 flex">
           {card.valuePart.tokenColors &&

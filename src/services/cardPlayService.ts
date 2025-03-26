@@ -1,0 +1,50 @@
+// src/services/cardPlayService.ts
+
+import { CardInfo } from "../constants/types";
+
+/**
+ * カードを手札から捨て札に移動する
+ * @param hand 現在の手札
+ * @param discardedCards 現在の捨て札
+ * @param cardId 捨てるカードのID
+ * @returns 更新された手札と捨て札、捨てられたカード
+ */
+export const discardCard = (
+  hand: CardInfo[],
+  discardedCards: CardInfo[],
+  cardId: string
+): {
+  updatedHand: CardInfo[];
+  updatedDiscardedCards: CardInfo[];
+  discardedCard: CardInfo | null;
+} => {
+  // カードを手札から見つける
+  const cardIndex = hand.findIndex((card) => card.id === cardId);
+
+  // カードが見つからない場合
+  if (cardIndex === -1) {
+    return {
+      updatedHand: hand,
+      updatedDiscardedCards: discardedCards,
+      discardedCard: null,
+    };
+  }
+
+  // 捨てるカードを取得
+  const discardedCard = hand[cardIndex];
+
+  // 手札を更新（捨てたカードを除去）
+  const updatedHand = [
+    ...hand.slice(0, cardIndex),
+    ...hand.slice(cardIndex + 1),
+  ];
+
+  // 捨て札に追加
+  const updatedDiscardedCards = [...discardedCards, discardedCard];
+
+  return {
+    updatedHand,
+    updatedDiscardedCards,
+    discardedCard,
+  };
+};

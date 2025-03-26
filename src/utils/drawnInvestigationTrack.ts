@@ -1,20 +1,39 @@
 import { RefObject } from "react";
-import { GameState, Token, TokenColor } from "../constants/types";
+import { GameState, PlayerRole, Token } from "../constants/types";
 import { drawTokenColors } from "./tokenUtils";
 
-const calculateTokenPosition = (position: number, cellHeight: number) => {
-  return (5 - position) * cellHeight + cellHeight / 2;
+const calculateTokenPosition = (
+  position: number,
+  cellHeight: number,
+  localPlayerRole: PlayerRole
+) => {
+  // 座標計算を統一 (5 - position または position + 5)
+  const adjustedPosition =
+    localPlayerRole === PlayerRole.NIXON
+      ? 5 - position // NIXONの場合: 5,-5 → 10,0
+      : position + 5; // EDITORの場合: -5,5 → 0,10
+
+  return adjustedPosition * cellHeight + cellHeight / 2;
 };
 
 const drawTrack = (
   ctx: CanvasRenderingContext2D,
-  canvas: HTMLCanvasElement
+  canvas: HTMLCanvasElement,
+  localPlayerRole: PlayerRole
 ) => {
   const trackWidth = canvas.width * 0.9;
   const cellHeight = canvas.height / 11;
 
   for (let i = 0; i < 11; i++) {
-    const position = i <= 5 ? 5 - i : i - 5;
+    // 数字の描画時にroleを考慮
+    const position =
+      localPlayerRole === PlayerRole.NIXON
+        ? i <= 5
+          ? 5 - i
+          : i - 5
+        : i <= 5
+          ? i - 5
+          : 5 - i;
     const y = i * cellHeight;
 
     ctx.fillStyle = i === 5 ? "#e5e7eb" : i % 2 === 0 ? "#f3f4f6" : "#ffffff";
@@ -106,6 +125,8 @@ const drawInvestigationTrack = (
   canvasRef: RefObject<HTMLCanvasElement | null>,
   gameState: GameState
 ) => {
+  const localPlayerRole = gameState.players[gameState.localPlayerId].role;
+
   const canvas = canvasRef.current;
   if (!canvas) return;
 
@@ -124,14 +145,16 @@ const drawInvestigationTrack = (
   ctx.fillRect(0, 0, canvas.width, canvas.height);
 
   // トラックの描画
-  drawTrack(ctx, canvas);
+  drawTrack(ctx, canvas, localPlayerRole);
 
   // オーナーがいないトークンのみをフィルタリング
   const tokens = [
     { ...gameState.initiative, type: "initiative" as const },
     { ...gameState.power, type: "power" as const },
     ...gameState.evidence,
-  ].filter((token) => token.owner === null);
+  ]
+    .filter((token) => token.owner === null)
+    .sort((a, b) => a.position - b.position);
 
   // トークン配置の計算
   const tokenSpacing = 40;
@@ -140,7 +163,11 @@ const drawInvestigationTrack = (
   // トークンの描画
   tokens.forEach((token, index) => {
     const cellHeight = canvas.height / 11;
-    const y = calculateTokenPosition(token.position, cellHeight);
+    const y = calculateTokenPosition(
+      token.position,
+      cellHeight,
+      localPlayerRole
+    );
     const xOffset = index * tokenSpacing - totalWidth / 2 + tokenSpacing / 2;
     const tokenX = canvas.width / 2 + xOffset;
 

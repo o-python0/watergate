@@ -1,8 +1,7 @@
-import React from "react";
+import React, { useEffect } from "react";
 import { useGame } from "../../contexts/GameContexts";
 import { CardInfo } from "../../constants/types";
 import Card from "./Card";
-import { TEST_HAND_CARDS } from "../../constants";
 import TokenTypeSelectorModal, {
   TokenSelection,
 } from "./modal/TokenTypeSelectorModal";
@@ -11,6 +10,7 @@ import TokenActionSelectorModal, {
 } from "./modal/TokenActionSelectorModal";
 import { useTokenTypeSelector } from "../../hooks/modals/useTokenTypeSelector";
 import { useTokenActionSelector } from "../../hooks/modals/useTokenActionSelector";
+import { usePlayerCards } from "../../hooks/usePlayerCards";
 
 type Props = {
   onPlayActionPart?: (cardId: string) => void;
@@ -22,11 +22,20 @@ const PlayerCardsArea: React.FC<Props> = ({
   onPlayValuePart,
 }) => {
   const {
+    gameState,
     moveTokenBySteps,
     flipTokenFaceUp,
     findFaceDownTokenWithColor,
     animating,
   } = useGame();
+
+  const { hand, loading, loadPlayerHand } = usePlayerCards();
+  const localPlayer = gameState.players[gameState.localPlayerId];
+  const playerRole = localPlayer?.role;
+
+  useEffect(() => {
+    loadPlayerHand();
+  }, [playerRole]);
 
   // 1段階目のモーダルのフック
   const {
@@ -128,10 +137,14 @@ const PlayerCardsArea: React.FC<Props> = ({
     }
   };
 
+  if (loading) {
+    return <div>カード読み込み中...</div>;
+  }
+
   return (
     <div className="w-full h-full bg-orange-50 border border-orange-200 rounded p-4">
       <div className="flex justify-center space-x-4 h-full">
-        {TEST_HAND_CARDS.map((card) => (
+        {hand.map((card) => (
           <Card
             key={card.id}
             card={card}

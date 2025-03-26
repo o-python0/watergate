@@ -96,8 +96,9 @@ export interface PlayerInfo {
   name?: string;
 
   roundCapturedTokens?: string[]; // 今ラウンドで獲得したトークン
-  discardedCards?: number; // 捨て札の枚数
-  excludedCards?: number; // 除外カードの枚数
+  hand?: CardInfo[]; // 手札
+  discardedCards?: CardInfo[]; // 捨て札の枚数
+  excludedCards?: CardInfo[]; // 除外カードの枚数
   powerTokensCaptured?: number; // 勢力トークン獲得数
   remainingDeckCards?: number; // 残りデッキ枚数
 }

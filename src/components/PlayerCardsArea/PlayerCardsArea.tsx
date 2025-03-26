@@ -1,5 +1,4 @@
 import React, { useEffect } from "react";
-import { useGame } from "../../contexts/GameContexts";
 import { CardInfo } from "../../constants/types";
 import Card from "./Card";
 import TokenTypeSelectorModal, {
@@ -11,6 +10,7 @@ import TokenActionSelectorModal, {
 import { useTokenTypeSelector } from "../../hooks/modals/useTokenTypeSelector";
 import { useTokenActionSelector } from "../../hooks/modals/useTokenActionSelector";
 import { usePlayerCards } from "../../hooks/usePlayerCards";
+import { useGameStore } from "../../store/gameStore";
 
 type Props = {
   onPlayActionPart?: (cardId: string) => void;
@@ -23,11 +23,11 @@ const PlayerCardsArea: React.FC<Props> = ({
 }) => {
   const {
     gameState,
-    moveTokenBySteps,
+    moveToken,
     flipTokenFaceUp,
     findFaceDownTokenWithColor,
     animating,
-  } = useGame();
+  } = useGameStore();
 
   const { hand, loading, loadPlayerHand } = usePlayerCards();
   const localPlayer = gameState.players[gameState.localPlayerId];
@@ -86,7 +86,7 @@ const PlayerCardsArea: React.FC<Props> = ({
       case "initiative":
       case "power":
         // イニシアチブまたは勢力トークンの場合、直接移動
-        moveTokenBySteps(selection.type, value);
+        moveToken(selection.type, value);
         completeCardPlay(typeSelectorCard.id);
         break;
     }
@@ -101,7 +101,7 @@ const PlayerCardsArea: React.FC<Props> = ({
     switch (action.type) {
       case "moveToken":
         // 表向きトークンを移動
-        moveTokenBySteps("evidence", value, action.tokenId);
+        moveToken("evidence", value, action.tokenId);
         completeCardPlay(actionSelectorCard.id);
         break;
 
@@ -112,7 +112,7 @@ const PlayerCardsArea: React.FC<Props> = ({
         if (faceDownTokenId !== null) {
           // トークンを表向きにして移動
           flipTokenFaceUp(faceDownTokenId);
-          moveTokenBySteps("evidence", value, faceDownTokenId);
+          moveToken("evidence", value, faceDownTokenId);
           completeCardPlay(actionSelectorCard.id);
         } else {
           // 裏向きトークンがない場合は、トークンタイプ選択モーダルに戻る

@@ -1,6 +1,6 @@
 import React from "react";
 import { TokenColor } from "../../../constants/types";
-import { useGame } from "../../../contexts/GameContexts";
+import { useGameStore } from "../../../store/gameStore";
 import { getColorHex } from "../../../utils/tokenUtils";
 
 // アクションの種類
@@ -23,12 +23,12 @@ const TokenActionSelectorModal: React.FC<TokenActionSelectorProps> = ({
   onBack,
   onCancel,
 }) => {
-  const { gameState } = useGame();
+  const { gameState } = useGameStore();
 
   // 調査トラック上の選択色の表向きトークンを取得
   const faceUpTokens = gameState.evidence.filter(
     (token) =>
-      token.isFaceUp && token.colors!.includes(color) && token.owner === null // 獲得されていないトークンのみ
+      token.isFaceUp && token.colors!.includes(color) && token.owner === null
   );
 
   // 裏向きトークンが1つ以上あるか確認
@@ -71,10 +71,7 @@ const TokenActionSelectorModal: React.FC<TokenActionSelectorProps> = ({
                     </div>
                     <div>
                       <div className="font-medium">
-                        トークン {token.label} を移動
-                      </div>
-                      <div className="text-xs text-gray-500">
-                        位置: {token.position}
+                        証拠トークン No.{token.label} を移動させる
                       </div>
                     </div>
                   </button>

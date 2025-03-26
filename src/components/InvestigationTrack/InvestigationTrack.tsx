@@ -1,10 +1,10 @@
 import React, { useRef } from "react";
-import { useGame } from "../../contexts/GameContexts";
 import useCanvas from "../../hooks/useCanvas";
+import { useGameStore } from "../../store/gameStore";
 
 const InvestigationTrack: React.FC = () => {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
-  const { gameState } = useGame();
+  const { gameState } = useGameStore();
 
   useCanvas(canvasRef, gameState);
 

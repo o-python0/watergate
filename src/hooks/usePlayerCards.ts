@@ -1,10 +1,10 @@
 // src/hooks/usePlayerCards.ts
 import { useState } from "react";
-import { useGame } from "../contexts/GameContexts";
+import { useGameStore } from "../store/gameStore";
 import { fetchHandByRole } from "../services/deckService";
 
 export const usePlayerCards = () => {
-  const { gameState, setGameState } = useGame();
+  const { gameState, setGameState } = useGameStore();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<Error | null>(null);
 

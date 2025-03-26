@@ -2,10 +2,14 @@
 import React from "react";
 import { useGame } from "../contexts/GameContexts";
 import { PlayerRole } from "../constants/types";
+import { useGameStore } from "../store/gameStore";
 
 // 開発用ツール - ロール切り替えなど
 export const DevTools: React.FC = () => {
-  const { gameState, setGameState, localPlayerRole } = useGame();
+  const { gameState, setGameState } = useGameStore();
+
+  const localPlayerRole =
+    gameState.players[gameState.localPlayerId]?.role || PlayerRole.NIXON;
 
   // ロール切り替え処理
   const switchRole = () => {

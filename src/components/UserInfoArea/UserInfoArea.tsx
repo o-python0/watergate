@@ -2,7 +2,6 @@
 import React from "react";
 import UserInfo from "./UserInfo";
 import InformantsArea from "./InformantsArea";
-import { useGame } from "../../contexts/GameContexts";
 
 const UserInfoArea: React.FC = () => {
   return (

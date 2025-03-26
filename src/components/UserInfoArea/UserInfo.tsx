@@ -6,7 +6,7 @@ import {
   ExcludedCardIcon,
 } from "../../assets/icons";
 import { PlayerRole } from "../../constants/types";
-import { useGame } from "../../contexts/GameContexts";
+import { useGameStore } from "../../store/gameStore";
 import RoundCapturedTokens from "./RoundCaputuredTokens";
 
 interface Props {
@@ -14,7 +14,9 @@ interface Props {
 }
 
 const UserInfo: React.FC<Props> = ({ isLocalPlayer }) => {
-  const { gameState, localPlayerRole } = useGame();
+  const { gameState } = useGameStore();
+
+  const localPlayerRole = gameState.players[gameState.localPlayerId]?.role;
 
   // プレイヤータイプに応じた設定
   const isNixon = localPlayerRole === PlayerRole.NIXON;

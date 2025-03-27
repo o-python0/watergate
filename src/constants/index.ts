@@ -1,4 +1,11 @@
-import { CardInfo, GameState, PlayerRole, Token, TokenColor } from "./types";
+import {
+  CardInfo,
+  GameState,
+  PlayerInfo,
+  PlayerRole,
+  Token,
+  TokenColor,
+} from "./types";
 
 export const TOKEN_INITIAL_POSITION = 0;
 
@@ -69,27 +76,26 @@ export const DEFAULT_GAME_STATE: GameState = {
     },
   ],
   // プレイヤー情報
-  players: {
-    player1: {
-      id: "player1",
-      role: PlayerRole.NIXON,
-      roundCapturedTokens: [],
-      discardedCards: [],
-      excludedCards: [],
-      powerTokensCaptured: 0,
-      remainingDeckCards: 20,
-    },
-    player2: {
-      id: "player2",
-      role: PlayerRole.EDITOR,
-      roundCapturedTokens: [],
-      discardedCards: [],
-      excludedCards: [],
-      powerTokensCaptured: 0,
-      remainingDeckCards: 20,
-    },
-  },
   localPlayerId: "player1",
+};
+
+export const PLAYER1_DATA: PlayerInfo = {
+  id: "player1",
+  role: PlayerRole.NIXON,
+  roundCapturedTokens: [],
+  discardedCards: [],
+  excludedCards: [],
+  powerTokensCaptured: 0,
+  remainingDeckCards: 20,
+};
+export const PLAYER2_DATA: PlayerInfo = {
+  id: "player2",
+  role: PlayerRole.EDITOR,
+  roundCapturedTokens: [],
+  discardedCards: [],
+  excludedCards: [],
+  powerTokensCaptured: 0,
+  remainingDeckCards: 20,
 };
 
 // トークン獲得位置

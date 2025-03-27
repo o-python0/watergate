@@ -1,5 +1,5 @@
 import React, { useEffect } from "react";
-import { CardInfo } from "../../constants/types";
+import { CardInfo, PlayerRole } from "../../constants/types";
 import Card from "./Card";
 import TokenTypeSelectorModal, {
   TokenSelection,
@@ -11,26 +11,21 @@ import { useTokenTypeSelector } from "../../hooks/modals/useTokenTypeSelector";
 import { useTokenActionSelector } from "../../hooks/modals/useTokenActionSelector";
 import { usePlayerCards } from "../../hooks/usePlayerCards";
 import { useGameStore } from "../../store/gameStore";
+import { useCards, usePlayers, useTokens } from "../../store/hooks";
 
 const PlayerCardsArea: React.FC = () => {
-  const {
-    gameState,
-    moveToken,
-    flipTokenFaceUp,
-    findFaceDownTokenWithColor,
-    discardCard,
-    selectedCardId,
-    setSelectedCardId,
-    animating,
-  } = useGameStore();
+  const { selectedCardId, setSelectedCardId, animating } = useGameStore();
+  const { localPlayer } = usePlayers();
+  const { moveToken, flipTokenFaceUp, findFaceDownTokenWithColor } =
+    useTokens();
+  const { discardCard } = useCards();
 
   const { hand, loading, loadPlayerHand } = usePlayerCards();
-  const localPlayer = gameState.players[gameState.localPlayerId];
-  const playerRole = localPlayer?.role;
+  const localPlayerRole = localPlayer?.role || PlayerRole.NIXON;
 
   useEffect(() => {
     loadPlayerHand();
-  }, [playerRole]);
+  }, [localPlayerRole]);
 
   // 1段階目のモーダルのフック
   const {
@@ -82,7 +77,6 @@ const PlayerCardsArea: React.FC = () => {
       case "initiative":
       case "power":
         // イニシアチブまたは勢力トークンの場合、直接移動
-        discardCard(selectedCardId);
         moveToken(selection.type, value);
         completeCardPlay(typeSelectorCard.id);
         break;
@@ -139,7 +133,7 @@ const PlayerCardsArea: React.FC = () => {
   return (
     <div className="w-full h-full bg-orange-50 border border-orange-200 rounded p-4">
       <div className="flex justify-center space-x-4 h-full">
-        {hand.map((card) => (
+        {hand.map((card: CardInfo) => (
           <Card
             key={card.id}
             card={card}

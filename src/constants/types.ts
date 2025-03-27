@@ -78,27 +78,32 @@ export interface TrackConfig {
   cells: number;
 }
 
-// ゲーム状態の型定義
-export interface GameState {
-  track: TrackConfig;
-  initiative: Token;
-  power: Token;
-  evidence: Token[];
-  players: {
-    [playerId: string]: PlayerInfo;
-  };
-  localPlayerId: string;
+// プレイヤーの役職や手札情報を管理する型
+export interface PlayerInfo {
+  id: string; // プレイヤーID
+  role: PlayerRole; // プレイヤーの役職
+  name?: string; // プレイヤー名（オプション）
+  roundCapturedTokens?: string[]; // ラウンドで獲得したトークン
+  hand?: CardInfo[]; // プレイヤーの手札
+  discardedCards?: CardInfo[]; // 捨て札
+  excludedCards?: CardInfo[]; // 除外カード
+  powerTokensCaptured?: number; // 獲得した勢力トークン数
+  remainingDeckCards?: number; // 残りデッキ枚数
 }
 
-export interface PlayerInfo {
-  id: string;
-  role: PlayerRole;
-  name?: string;
+// ゲーム状態の型
+export interface GameState {
+  track: TrackConfig; // トラックの設定
+  initiative: Token; // イニシアティブトークン
+  power: Token; // パワートークン
+  evidence: Token[]; // 証拠トークンのリスト
+  localPlayerId: string; // ローカルプレイヤーのID（'player1' または 'player2'）
+}
 
-  roundCapturedTokens?: string[]; // 今ラウンドで獲得したトークン
-  hand?: CardInfo[]; // 手札
-  discardedCards?: CardInfo[]; // 捨て札の枚数
-  excludedCards?: CardInfo[]; // 除外カードの枚数
-  powerTokensCaptured?: number; // 勢力トークン獲得数
-  remainingDeckCards?: number; // 残りデッキ枚数
+// プレイヤーの状態を管理する型（playerStore）
+export interface PlayerStore {
+  player1: PlayerInfo; // プレイヤー1
+  player2: PlayerInfo; // プレイヤー2
+  getPlayerById: (id: string) => PlayerInfo | undefined; // プレイヤーIDで情報を取得
+  isLocalPlayer: (id: string) => boolean; // ローカルプレイヤーか判定
 }

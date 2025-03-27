@@ -1,6 +1,7 @@
 import { RefObject } from "react";
 import { GameState, PlayerRole, Token } from "../constants/types";
 import { drawTokenColors } from "./tokenUtils";
+import { usePlayerStore } from "../store/playerStore";
 
 const calculateTokenPosition = (
   position: number,
@@ -121,12 +122,14 @@ const drawEvidenceToken = (
   }
 };
 
+/**
+ * InvestigationTrackを描画する関数
+ */
 const drawInvestigationTrack = (
   canvasRef: RefObject<HTMLCanvasElement | null>,
-  gameState: GameState
+  gameState: GameState,
+  localPlayerRole: PlayerRole
 ) => {
-  const localPlayerRole = gameState.players[gameState.localPlayerId].role;
-
   const canvas = canvasRef.current;
   if (!canvas) return;
 

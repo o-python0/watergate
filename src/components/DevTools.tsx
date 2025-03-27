@@ -2,13 +2,17 @@
 import React from "react";
 import { PlayerRole } from "../constants/types";
 import { useGameStore } from "../store/gameStore";
+import { usePlayerStore } from "../store/playerStore";
+import { usePlayers } from "../store/hooks";
 
 // 開発用ツール - ロール切り替えなど
 export const DevTools: React.FC = () => {
-  const { gameState, setGameState } = useGameStore();
+  const { gameState } = useGameStore();
+  const { getPlayerById } = usePlayerStore();
+  const { localPlayer } = usePlayers();
 
-  const localPlayerRole =
-    gameState.players[gameState.localPlayerId]?.role || PlayerRole.NIXON;
+  // localPlayerの役割を取得
+  const localPlayerRole = localPlayer?.role || PlayerRole.NIXON;
 
   // ロール切り替え処理
   const switchRole = () => {
@@ -17,16 +21,14 @@ export const DevTools: React.FC = () => {
         ? PlayerRole.EDITOR
         : PlayerRole.NIXON;
 
-    setGameState((prev) => ({
-      ...prev,
-      players: {
-        ...prev.players,
-        [prev.localPlayerId]: {
-          ...prev.players[prev.localPlayerId],
-          role: newRole,
-        },
+    // playerStoreの状態を更新
+    usePlayerStore.getState().setPlayers({
+      ...usePlayerStore.getState().players,
+      [gameState.localPlayerId]: {
+        ...getPlayerById(gameState.localPlayerId)!,
+        role: newRole,
       },
-    }));
+    });
   };
 
   return (

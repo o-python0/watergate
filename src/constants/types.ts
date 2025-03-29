@@ -83,12 +83,13 @@ export interface PlayerInfo {
   id: string; // プレイヤーID
   role: PlayerRole; // プレイヤーの役職
   name?: string; // プレイヤー名（オプション）
-  roundCapturedTokens?: string[]; // ラウンドで獲得したトークン
+
   hand?: CardInfo[]; // プレイヤーの手札
+  remainingDeckCards?: number; // 残りデッキ枚数
   discardedCards?: CardInfo[]; // 捨て札
   excludedCards?: CardInfo[]; // 除外カード
+  roundCapturedTokens?: string[]; // このラウンドで獲得したトークン
   powerTokensCaptured?: number; // 獲得した勢力トークン数
-  remainingDeckCards?: number; // 残りデッキ枚数
 }
 
 // ゲーム状態の型
@@ -98,12 +99,5 @@ export interface GameState {
   power: Token; // パワートークン
   evidence: Token[]; // 証拠トークンのリスト
   localPlayerId: string; // ローカルプレイヤーのID（'player1' または 'player2'）
-}
-
-// プレイヤーの状態を管理する型（playerStore）
-export interface PlayerStore {
-  player1: PlayerInfo; // プレイヤー1
-  player2: PlayerInfo; // プレイヤー2
-  getPlayerById: (id: string) => PlayerInfo | undefined; // プレイヤーIDで情報を取得
-  isLocalPlayer: (id: string) => boolean; // ローカルプレイヤーか判定
+  firstPlayerId: string; // 先攻プレイヤーのID
 }

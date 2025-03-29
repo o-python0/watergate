@@ -1,10 +1,18 @@
-import React from "react";
+import React, { useEffect } from "react";
+import { useRoundStore } from "../store/roundStore";
 import EvidenceBoard from "./EvidenceBoard/EvidenveBoard";
 import InvestigationTrack from "./InvestigationTrack/InvestigationTrack";
 import PlayerCardsArea from "./PlayerCardsArea/PlayerCardsArea";
 import UserInfoArea from "./UserInfoArea/UserInfoArea";
 
 const GameBoard: React.FC = () => {
+  const { startNewRound, currentRound } = useRoundStore();
+
+  useEffect(() => {
+    if (currentRound === 0) {
+      startNewRound();
+    }
+  }, []);
   return (
     <div className="h-screen w-screen flex flex-col bg-gray-900 p-2 overflow-hidden">
       {/* メインエリア（上部） */}

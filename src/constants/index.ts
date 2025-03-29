@@ -77,6 +77,7 @@ export const DEFAULT_GAME_STATE: GameState = {
   ],
   // プレイヤー情報
   localPlayerId: "player1",
+  firstPlayerId: "player1",
 };
 
 export const PLAYER1_DATA: PlayerInfo = {

@@ -11,7 +11,8 @@ import { useTokenTypeSelector } from "../../hooks/modals/useTokenTypeSelector";
 import { useTokenActionSelector } from "../../hooks/modals/useTokenActionSelector";
 import { usePlayerCards } from "../../hooks/usePlayerCards";
 import { useGameStore } from "../../store/gameStore";
-import { useCards, usePlayers, useTokens } from "../../store/hooks";
+import { useCards, useGame, usePlayers, useTokens } from "../../store/hooks";
+import { useRoundStore } from "../../store/roundStore";
 
 const PlayerCardsArea: React.FC = () => {
   const { selectedCardId, setSelectedCardId, animating } = useGameStore();
@@ -19,9 +20,18 @@ const PlayerCardsArea: React.FC = () => {
   const { moveToken, flipTokenFaceUp, findFaceDownTokenWithColor } =
     useTokens();
   const { discardCard } = useCards();
-
+  const { endTurn, currentPhase, currentPlayerTurn } = useRoundStore();
+  const localPlayerId = useGameStore((state) => state.getLocalPlayerId());
   const { hand, loading, loadPlayerHand } = usePlayerCards();
   const localPlayerRole = localPlayer?.role || PlayerRole.NIXON;
+
+  // ローカルプレイヤーのターンかどうかを判定
+  const isLocalPlayerTurn = currentPlayerTurn === localPlayerId;
+  // カードフェーズ中かどうかをチェック
+  const isCardPhase = currentPhase === "card";
+  const isCardPlayable = () => {
+    return isCardPhase && isLocalPlayerTurn && !animating;
+  };
 
   useEffect(() => {
     loadPlayerHand();
@@ -124,6 +134,8 @@ const PlayerCardsArea: React.FC = () => {
     // モーダルを閉じる
     closeTypeSelector();
     closeActionSelector();
+    // カードプレイ後にターンを終了
+    endTurn();
   };
 
   if (loading) {
@@ -131,7 +143,8 @@ const PlayerCardsArea: React.FC = () => {
   }
 
   return (
-    <div className="w-full h-full bg-orange-50 border border-orange-200 rounded p-4">
+    <div className="w-full h-full bg-orange-50 border border-orange-200 rounded p-4 relative">
+      {/* カード表示部分 */}
       <div className="flex justify-center space-x-4 h-full">
         {hand.map((card: CardInfo) => (
           <Card
@@ -139,10 +152,36 @@ const PlayerCardsArea: React.FC = () => {
             card={card}
             onActionPartClick={handleActionPartClick}
             onValuePartClick={handleValuePartClick}
-            disabled={animating}
+            disabled={!isCardPlayable()}
           />
         ))}
       </div>
+
+      {/* 相手ターン時または非カードフェーズ時に表示するオーバーレイ */}
+      {((!isLocalPlayerTurn && isCardPhase) || !isCardPhase) && (
+        <div className="absolute inset-0 bg-black bg-opacity-30 z-10 flex items-center justify-center">
+          {/* 相手ターン時のメッセージ */}
+          {!isLocalPlayerTurn && isCardPhase && (
+            <div className="bg-white px-6 py-3 rounded-lg shadow-lg border-2 border-red-400">
+              <span className="text-xl font-bold text-red-600">
+                相手のターン中です・・・
+              </span>
+            </div>
+          )}
+
+          {/* カードフェーズ以外の場合のメッセージ */}
+          {!isCardPhase && (
+            <div className="bg-white px-6 py-3 rounded-lg shadow-lg border-2 border-blue-400">
+              <span className="text-xl font-bold text-blue-600">
+                {currentPhase === "preparation"
+                  ? "準備フェーズです"
+                  : "評価フェーズです"}
+              </span>
+            </div>
+          )}
+        </div>
+      )}
+
       {/* トークンタイプ選択モーダル (1段階目) */}
       {showTypeSelector && typeSelectorCard && (
         <TokenTypeSelectorModal

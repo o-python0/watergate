@@ -23,11 +23,12 @@ interface PlayerStore {
   setError: (error: Error | null) => void;
   setPlayers: (players: { [playerId: string]: PlayerInfo }) => void;
   initializePlayers: () => void;
+  findPlayerByRole: (role: PlayerRole) => string;
 }
 
 // プレイヤー関連の操作を管理するストア
 export const usePlayerStore = create<PlayerStore>((set, get) => ({
-  // 状態 - 初期値を設定
+  // 状態
   players: {
     player1: PLAYER1_DATA,
     player2: PLAYER2_DATA,
@@ -98,6 +99,13 @@ export const usePlayerStore = create<PlayerStore>((set, get) => ({
         player2: PLAYER2_DATA,
       },
     });
+  },
+  // 指定された役割を持つプレイヤーIDを取得
+  findPlayerByRole: (role: PlayerRole): string => {
+    const { players } = get();
+    return (
+      Object.keys(players).find((id) => players[id].role === role) || "player1"
+    );
   },
 }));
 

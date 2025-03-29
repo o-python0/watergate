@@ -5,7 +5,7 @@ import { useTokenStore } from "./tokenStore";
 import { usePlayerStore } from "./playerStore";
 import { fetchHandByRole } from "../services/deckService";
 import { TOKEN_INITIAL_POSITION } from "../constants";
-import { PlayerRole } from "../constants/types";
+import { PlayerInfo, PlayerRole } from "../constants/types";
 
 // ゲームフェーズの定義
 export enum GamePhase {
@@ -37,6 +37,8 @@ interface RoundStore {
   startEvaluationPhase: () => void;
   completeEvaluationPhase: () => void;
   setAutoProgress: (enabled: boolean) => void;
+  skipCurrentTurn: () => void;
+  resetRoundCapturedTokens: () => void;
 
   // 内部実装
   _resetTokenPositions: () => void;
@@ -77,13 +79,36 @@ export const useRoundStore = create<RoundStore>((set, get) => ({
 
   // 準備フェーズを開始
   startPreparationPhase: async () => {
+    console.log("準備フェーズ開始(ラウンド：", get().currentRound);
+    const { gameState } = useGameStore.getState();
+    console.log(gameState.firstPlayerId);
+    console.log(gameState.initiative.owner);
     set({ currentPhase: GamePhase.PREPARATION });
 
-    // 1. トークン位置のリセット
-    get()._resetTokenPositions();
+    // 1. 初回のイニシアチブの判定
+    let firstPlayerId: string;
 
-    // 2. イニシアチブの判定
-    const firstPlayerId = get()._determineInitiative();
+    if (get().currentRound === 1) {
+      // 1ラウンド目の処理
+      const { players } = usePlayerStore.getState();
+      // ロールが NIXON のプレイヤーを検索
+      firstPlayerId =
+        Object.keys(players).find(
+          (id) => players[id].role === PlayerRole.NIXON
+        ) || "player1";
+
+      // 決定した先攻プレイヤーID を gameState に保存
+      useGameStore.getState().setGameState((state) => ({
+        ...state,
+        firstPlayerId: firstPlayerId,
+      }));
+    } else {
+      firstPlayerId = gameState.firstPlayerId;
+    }
+    console.log("このラウンドの先攻プレイヤー: ", firstPlayerId);
+
+    // 2. トークン位置のリセット
+    get()._resetTokenPositions();
 
     // 3. 手札の配布
     await get()._dealCards(firstPlayerId);
@@ -94,6 +119,7 @@ export const useRoundStore = create<RoundStore>((set, get) => ({
 
   // 準備フェーズを完了
   completePreparationPhase: () => {
+    console.log("準備フェーズ完了");
     set({ preparationPhaseComplete: true });
 
     // 自動進行が有効ならカードフェーズへ
@@ -104,7 +130,8 @@ export const useRoundStore = create<RoundStore>((set, get) => ({
 
   // カードフェーズを開始
   startCardPhase: () => {
-    const firstPlayerId = get()._determineInitiative();
+    console.log("カードフェーズ開始");
+    const firstPlayerId = useGameStore.getState().gameState.firstPlayerId;
 
     set({
       currentPhase: GamePhase.CARD,
@@ -137,6 +164,7 @@ export const useRoundStore = create<RoundStore>((set, get) => ({
 
   // カードフェーズを完了
   completeCardPhase: () => {
+    console.log("カードフェーズ完了");
     set({ cardPhaseComplete: true });
 
     // 自動進行が有効なら評価フェーズへ
@@ -147,25 +175,30 @@ export const useRoundStore = create<RoundStore>((set, get) => ({
 
   // 評価フェーズを開始
   startEvaluationPhase: () => {
+    console.log("評価フェーズ開始");
     set({
       currentPhase: GamePhase.EVALUATION,
       evaluationPhaseComplete: false,
     });
 
-    // 1. 中立証拠トークンの袋への返却
-    get()._returnNeutralTokensToPool();
+    // // 1. 中立証拠トークンの袋への返却
+    // get()._returnNeutralTokensToPool();
 
     // 2. イニシアチブトークンの獲得
     get()._captureInitiativeToken();
 
-    // 3. 勢力トークンの獲得
-    get()._capturePowerToken();
+    // // 3. 勢力トークンの獲得
+    // get()._capturePowerToken();
 
-    // 4. トークンの再配置
-    get()._resetInitiativeAndPowerTokens();
+    // // 4. トークンの再配置
+    // 多分削除
+    // get()._resetInitiativeAndPowerTokens();
 
-    // 5. 証拠トークンの獲得
-    get()._captureEvidenceTokens();
+    // // 5. 証拠トークンの獲得
+    // get()._captureEvidenceTokens();
+
+    // このラウンドに獲得したトークンのリセット処理
+    get().resetRoundCapturedTokens();
 
     // 評価フェーズの完了
     get().completeEvaluationPhase();
@@ -173,6 +206,7 @@ export const useRoundStore = create<RoundStore>((set, get) => ({
 
   // 評価フェーズを完了
   completeEvaluationPhase: () => {
+    console.log("評価フェーズ完了");
     set({ evaluationPhaseComplete: true });
 
     // 自動進行が有効なら次のラウンドを開始
@@ -207,13 +241,13 @@ export const useRoundStore = create<RoundStore>((set, get) => ({
   _determineInitiative: () => {
     const { gameState } = useGameStore.getState();
     const { players } = usePlayerStore.getState();
+    // 初回の先攻プレイヤーを判定する
 
-    // イニシアチブトークンがどちらかのプレイヤーに獲得されている場合、そのプレイヤーを先攻に
-    if (gameState.initiative.owner) {
-      return gameState.initiative.owner;
-    }
+    // // イニシアチブトークンがどちらかのプレイヤーに獲得されている場合、そのプレイヤーを先攻に
+    // if (gameState.initiative.owner) {
+    //   return gameState.initiative.owner;
+    // }
 
-    // 以前のラウンドの状態に基づいて判定
     // 1ラウンド目はニクソン側を先攻にする
     if (get().currentRound === 1) {
       return (
@@ -223,7 +257,6 @@ export const useRoundStore = create<RoundStore>((set, get) => ({
       );
     }
 
-    // デフォルトとしてローカルプレイヤーIDを返す
     return gameState.localPlayerId;
   },
 
@@ -290,10 +323,10 @@ export const useRoundStore = create<RoundStore>((set, get) => ({
     }));
   },
 
-  // 内部実装: イニシアチブトークンの獲得
+  // 内部実装: イニシアチブトークンの獲得と次のラウンドの先攻プレイヤーの決定
   _captureInitiativeToken: () => {
     const { gameState } = useGameStore.getState();
-    const { players } = usePlayerStore.getState();
+    const { players, findPlayerByRole } = usePlayerStore.getState();
     const { initiative } = gameState;
 
     let ownerPlayerId: string | null = null;
@@ -301,51 +334,28 @@ export const useRoundStore = create<RoundStore>((set, get) => ({
     // 位置に基づいて獲得プレイヤーを決定
     if (initiative.position < 0) {
       // ニクソン側の獲得
-      ownerPlayerId =
-        Object.keys(players).find(
-          (id) => players[id].role === PlayerRole.NIXON
-        ) || null;
+      ownerPlayerId = findPlayerByRole(PlayerRole.NIXON);
     } else if (initiative.position > 0) {
       // エディター側の獲得
-      ownerPlayerId =
-        Object.keys(players).find(
-          (id) => players[id].role === PlayerRole.EDITOR
-        ) || null;
+      ownerPlayerId = findPlayerByRole(PlayerRole.EDITOR);
     } else {
       // スペース0の場合は非先攻プレイヤーが獲得
-      const firstPlayerId = get()._determineInitiative();
+      const firstPlayerId = gameState.firstPlayerId;
       ownerPlayerId =
         Object.keys(players).find((id) => id !== firstPlayerId) || null;
     }
 
     if (ownerPlayerId) {
-      // gameStateを更新
+      // firstPlayerIdのみを更新
       useGameStore.getState().setGameState((state) => ({
         ...state,
-        initiative: {
-          ...state.initiative,
-          owner: ownerPlayerId,
-        },
+        firstPlayerId: ownerPlayerId!, // イニシアチブトークン所有者を次の先攻プレイヤーに設定
       }));
-
-      // playerStoreを更新
-      const player = players[ownerPlayerId];
-      if (player) {
-        usePlayerStore.getState().setPlayers({
-          ...players,
-          [ownerPlayerId]: {
-            ...player,
-            roundCapturedTokens: [
-              ...(player.roundCapturedTokens || []),
-              "initiative",
-            ],
-          },
-        });
-      }
     }
   },
 
   // 内部実装: 勢力トークンの獲得
+  // TODO:勢力トークン獲得時の各陣営の特殊効果の処理
   _capturePowerToken: () => {
     const { gameState } = useGameStore.getState();
     const { players } = usePlayerStore.getState();
@@ -372,16 +382,8 @@ export const useRoundStore = create<RoundStore>((set, get) => ({
     }
 
     if (ownerPlayerId) {
-      // gameStateを更新
-      useGameStore.getState().setGameState((state) => ({
-        ...state,
-        power: {
-          ...state.power,
-          owner: ownerPlayerId,
-        },
-      }));
-
-      // playerStoreを更新
+      // 合計勢力トークン数を更新
+      // TODO:残り勢力トークン数を-1する
       const player = players[ownerPlayerId];
       if (player) {
         usePlayerStore.getState().setPlayers({
@@ -400,6 +402,7 @@ export const useRoundStore = create<RoundStore>((set, get) => ({
   },
 
   // 内部実装: イニシアチブと勢力トークンの再配置
+  // TODO:残り勢力トークン数を確認する(0の場合はニクソン側が勝利する)
   _resetInitiativeAndPowerTokens: () => {
     useGameStore.getState().setGameState((state) => ({
       ...state,
@@ -469,6 +472,40 @@ export const useRoundStore = create<RoundStore>((set, get) => ({
 
       return updatedState;
     });
+  },
+  // このラウンドで獲得したトークンをリセットする
+  resetRoundCapturedTokens: () => {
+    const { players } = usePlayerStore.getState();
+
+    // 各プレイヤーの roundCapturedTokens を空配列にリセット
+    const updatedPlayers: Record<string, PlayerInfo> = Object.entries(
+      players
+    ).reduce(
+      (acc: Record<string, PlayerInfo>, [playerId, player]) => {
+        acc[playerId] = {
+          ...player,
+          roundCapturedTokens: [],
+        };
+        return acc;
+      },
+      {} as Record<string, PlayerInfo>
+    );
+
+    usePlayerStore.getState().setPlayers(updatedPlayers);
+  },
+
+  // 開発用：ターンをスキップする
+  skipCurrentTurn: () => {
+    const remainingTurns = get().remainingTurns - 1;
+    set({ remainingTurns });
+
+    // 残り手番が0ならカードフェーズ完了
+    if (remainingTurns <= 0) {
+      get().completeCardPhase();
+    } else {
+      // そうでなければプレイヤーターンを交代
+      get()._processTurnChange();
+    }
   },
 }));
 

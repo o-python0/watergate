@@ -107,7 +107,7 @@ export const useRoundStore = create<RoundStore>((set, get) => ({
     }
     console.log("このラウンドの先攻プレイヤー: ", firstPlayerId);
 
-    // 2. トークン位置のリセット
+    // 2. トークン位置のリセット(ここで証拠トークンも同時に取得する予定)
     get()._resetTokenPositions();
 
     // 3. 手札の配布
@@ -180,6 +180,10 @@ export const useRoundStore = create<RoundStore>((set, get) => ({
       currentPhase: GamePhase.EVALUATION,
       evaluationPhaseComplete: false,
     });
+    // TODO:各処理の順番の調整
+    // =>イニチアチブトークンの処理については最後でも良いかも
+    // =>証拠トークンの処理は勢力トークンの処理の後に実行する必要がある
+    // 1, 4の処理については削除でも問題はないかも
 
     // // 1. 中立証拠トークンの袋への返却
     // get()._returnNeutralTokensToPool();
@@ -187,8 +191,8 @@ export const useRoundStore = create<RoundStore>((set, get) => ({
     // 2. イニシアチブトークンの獲得
     get()._captureInitiativeToken();
 
-    // // 3. 勢力トークンの獲得
-    // get()._capturePowerToken();
+    // 3. 勢力トークンの獲得
+    get()._capturePowerToken();
 
     // // 4. トークンの再配置
     // 多分削除
@@ -390,10 +394,6 @@ export const useRoundStore = create<RoundStore>((set, get) => ({
           ...players,
           [ownerPlayerId]: {
             ...player,
-            roundCapturedTokens: [
-              ...(player.roundCapturedTokens || []),
-              "power",
-            ],
             powerTokensCaptured: (player.powerTokensCaptured || 0) + 1,
           },
         });

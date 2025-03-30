@@ -89,7 +89,7 @@ export interface PlayerInfo {
   discardedCards?: CardInfo[]; // 捨て札
   excludedCards?: CardInfo[]; // 除外カード
   roundCapturedTokens?: string[]; // このラウンドで獲得したトークン
-  powerTokensCaptured?: number; // 獲得した勢力トークン数
+  powerTokensCaptured?: number; // 獲得した合計勢力トークン数
 }
 
 // ゲーム状態の型

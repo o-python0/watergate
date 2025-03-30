@@ -9,6 +9,7 @@ import { PlayerRole } from "../../constants/types";
 import { useGameStore } from "../../store/gameStore";
 import { usePlayerStore } from "../../store/playerStore";
 import RoundCapturedTokens from "./RoundCaputuredTokens";
+import TotalPowerTokens from "./TotalPowerTokens";
 
 interface Props {
   isLocalPlayer?: boolean;
@@ -47,24 +48,23 @@ const UserInfo: React.FC<Props> = ({ isLocalPlayer }) => {
       </h3>
       <div className="grid grid-cols-1 gap-1 text-sm">
         {/* 今ラウンドで獲得したトークン */}
-        <div className="bg-gray-200 p-1 rounded">
-          <RoundCapturedTokens
-            capturedTokens={playerInfo.roundCapturedTokens || []}
-          />
+        <div className="bg-gray-200 p-2 rounded h-[44px] flex items-center justify-center">
+          <div className="flex items-center justify-center w-full">
+            <RoundCapturedTokens
+              capturedTokens={playerInfo.roundCapturedTokens || []}
+            />
+          </div>
         </div>
+
         {/* 各カード枚数情報 */}
         <div className="bg-gray-200 p-1 rounded flex justify-around items-center">
           <DeckCardIcon count={playerInfo.remainingDeckCards || 0} />
           <DiscardCardIcon count={playerInfo.discardedCards?.length || 0} />
           <ExcludedCardIcon count={playerInfo.excludedCards?.length || 0} />
         </div>
+
         {/* 勢力トークン獲得数 */}
-        <div className="bg-gray-200 p-1 rounded">
-          <div className="font-medium">勢力トークン獲得数</div>
-          <div className="text-gray-600 text-xs">
-            {playerInfo.powerTokensCaptured || 0}個
-          </div>
-        </div>
+        <TotalPowerTokens count={playerInfo.powerTokensCaptured || 0} />
       </div>
     </div>
   );

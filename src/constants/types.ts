@@ -1,5 +1,3 @@
-// types.ts
-
 // プレイヤーのロールを定義
 export enum PlayerRole {
   NIXON = "nixon",

@@ -1,6 +1,6 @@
 import React, { useEffect } from "react";
 import { useRoundStore } from "../store/roundStore";
-import EvidenceBoard from "./EvidenceBoard/EvidenveBoard";
+import EvidenceBoard from "./EvidenceBoard/EvidenceBoard";
 import InvestigationTrack from "./InvestigationTrack/InvestigationTrack";
 import PlayerCardsArea from "./PlayerCardsArea/PlayerCardsArea";
 import UserInfoArea from "./UserInfoArea/UserInfoArea";

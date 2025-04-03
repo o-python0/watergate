@@ -2,9 +2,17 @@
 import React, { useRef, useEffect, useState } from "react";
 import { BOARD_BASE_SIZE } from "../../constants/evidenceBoard.constants";
 import { useEvidenceBoardStore } from "../../store/evidenceBoardStore";
+import { usePlayerStore } from "../../store/playerStore";
+import { useRoundStore } from "../../store/roundStore";
+import {
+  EvidenceNode,
+  NodeColor,
+  NodeOwner,
+} from "../../types/evidenceBoard.types";
 import ConnectionLine from "./ConnectionLine";
 import CorkBoard from "./CorkBoard";
-import EvidenceNode from "./EvidenceNode";
+import EvidenceNodeComponent from "./EvidenceNode";
+import SelectorNodeModal from "./modal/SelectorNodeModal";
 
 const EvidenceBoard: React.FC = () => {
   const containerRef = useRef<HTMLDivElement>(null);
@@ -13,14 +21,23 @@ const EvidenceBoard: React.FC = () => {
     height: BOARD_BASE_SIZE.height,
   });
 
+  const [showNodeModal, setShowNodeModal] = useState(false);
+
   // ストアから状態と関数を取得
   const {
     evidenceGraph,
     nodePositions,
     selectedNodeId,
+    selectedNode,
+    capturedEvidenceTokens,
     selectNode,
+    setSelectedNode,
     setNodeOwner,
+    addCapturedToken,
+    setPlacedEvidenceId,
   } = useEvidenceBoardStore();
+  const { currentPlayerTurn } = useRoundStore();
+  const { players } = usePlayerStore();
 
   // コンテナのサイズに合わせてSVGサイズを調整
   useEffect(() => {
@@ -119,19 +136,43 @@ const EvidenceBoard: React.FC = () => {
   };
 
   // ダブルクリックで所有者を変更
-  const handleNodeDoubleClick = (nodeId: string) => {
-    const node = evidenceGraph.nodes[nodeId];
-    if (!node) return;
+  const handleNodeDoubleClick = (node: { id: string; color: NodeColor }) => {
+    setSelectedNode({ id: node.id, color: node.color });
+    setShowNodeModal(true);
+  };
 
-    // 所有者を循環: null -> journalist -> nixon -> null
-    const nextOwner =
-      node.owner === null
-        ? "journalist"
-        : node.owner === "journalist"
-          ? "nixon"
-          : null;
+  const changeNodeOwner = () => {
+    if (!selectedNode) return;
 
-    setNodeOwner(nodeId, nextOwner);
+    // 現在のターンのプレイヤーroleを取得する
+    const currentPlayerRole = players[currentPlayerTurn || ""]?.role;
+    // ノードの所有者を変更
+    setNodeOwner(selectedNode.id, currentPlayerRole as NodeOwner);
+  };
+
+  // 利用可能なトークンをフィルタリング
+  const getAvailableTokens = () => {
+    if (!selectedNode?.color || !selectedNode?.color) return [];
+
+    // capturedEvidenceTokens からフィルタリング
+    return capturedEvidenceTokens
+      .filter((token) => token.colors.includes(selectedNode.color as string))
+      .map((token) => ({
+        id: token.id,
+        colors: token.colors as NodeColor[],
+      }));
+  };
+
+  // トークンを選択した際の処理
+  const handleTokenSelect = (tokenId: string) => {
+    // トークンの所有者を変更
+    changeNodeOwner();
+    // 配置されたtokenIdの紐付け
+    if (selectedNode) {
+      setPlacedEvidenceId(selectedNode?.id, tokenId);
+    }
+
+    setShowNodeModal(false);
   };
 
   return (
@@ -159,7 +200,7 @@ const EvidenceBoard: React.FC = () => {
 
           {/* ノードを描画 */}
           {Object.entries(evidenceGraph.nodes).map(([nodeId, node]) => (
-            <EvidenceNode
+            <EvidenceNodeComponent
               data={{
                 id: node.id,
                 type: node.type,
@@ -167,15 +208,28 @@ const EvidenceBoard: React.FC = () => {
                 owner: node.owner,
               }}
               position={scaledNodePositions[nodeId] || { x: 0, y: 0 }}
-              // isSelected={selectedNodeId === nodeId}
+              isSelected={selectedNodeId === nodeId}
               handlers={{
                 onClick: () => handleNodeClick(nodeId),
-                onDoubleClick: () => handleNodeDoubleClick(nodeId),
+                onDoubleClick: () =>
+                  handleNodeDoubleClick({
+                    id: node.id,
+                    color: node.color as NodeColor,
+                  }),
               }}
             />
           ))}
         </CorkBoard>
       </div>
+
+      {/* トークン選択モーダル */}
+      <SelectorNodeModal
+        isOpen={showNodeModal}
+        onClose={() => setShowNodeModal(false)}
+        onSelect={handleTokenSelect}
+        availableTokens={getAvailableTokens()}
+        selectedNode={selectedNode}
+      />
     </div>
   );
 };

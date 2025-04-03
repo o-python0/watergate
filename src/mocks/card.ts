@@ -36,7 +36,7 @@ export const EDITOR_DECKS: CardInfo[] = [
     },
     valuePart: {
       value: 4,
-      tokenColors: ["red"],
+      tokenColors: ["blue"],
     },
   },
   {
@@ -52,7 +52,7 @@ export const EDITOR_DECKS: CardInfo[] = [
     },
     valuePart: {
       value: 2,
-      tokenColors: ["red", "blue"],
+      tokenColors: ["blue", "green"],
     },
   },
   {
@@ -84,7 +84,7 @@ export const EDITOR_DECKS: CardInfo[] = [
     },
     valuePart: {
       value: 1,
-      tokenColors: ["green", "red"],
+      tokenColors: ["green", "yellow"],
     },
   },
 ];
@@ -126,7 +126,7 @@ export const NIXON_DECKS: CardInfo[] = [
     },
     valuePart: {
       value: -4,
-      tokenColors: ["red"],
+      tokenColors: ["yellow"],
     },
   },
   {
@@ -142,7 +142,7 @@ export const NIXON_DECKS: CardInfo[] = [
     },
     valuePart: {
       value: -2,
-      tokenColors: ["red", "blue"],
+      tokenColors: ["blue", "green"],
     },
   },
   {
@@ -174,7 +174,7 @@ export const NIXON_DECKS: CardInfo[] = [
     },
     valuePart: {
       value: -1,
-      tokenColors: ["green", "red"],
+      tokenColors: ["green", "yellow"],
     },
   },
 ];

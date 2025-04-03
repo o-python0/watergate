@@ -1,6 +1,12 @@
 import React from "react";
-import { NODE_COLORS } from "../../constants/evidenceBoard.constants";
 import {
+  getNodeShape,
+  NODE_COLORS,
+  ShapeType,
+} from "../../constants/evidenceBoard.constants";
+import { useEvidenceBoardStore } from "../../store/evidenceBoardStore";
+import {
+  EvidenceNode,
   NodeColor,
   NodeOwner,
   NodeType,
@@ -34,11 +40,11 @@ interface Props {
   isSelected?: boolean;
   handlers: {
     onClick: (nodeId: string) => void;
-    onDoubleClick: (nodeId: string) => void;
+    onDoubleClick: (node: Props["data"]) => void;
   };
 }
 
-const EvidenceNode: React.FC<Props> = ({
+const EvidenceNodeComponent: React.FC<Props> = ({
   data,
   position,
   isSelected,
@@ -47,6 +53,7 @@ const EvidenceNode: React.FC<Props> = ({
   const { id, type, color, owner } = data;
   const { onClick, onDoubleClick } = handlers;
   const nodeSize = NODE_SIZES[type];
+  const { evidenceGraph } = useEvidenceBoardStore();
 
   // ノードの色を決定
   let fillColor = NODE_COLORS.default;
@@ -69,48 +76,61 @@ const EvidenceNode: React.FC<Props> = ({
     fillColor = OWNER_COLORS.nixon;
   }
 
-  // ノードが非活性かどうか判定
-  const isDisabled = owner === "nixon";
+  const isDimmed = owner === "nixon";
+
+  // nodeの非活性条件
+  const isNotClickable =
+    type === "nixon" || type === "informant" || owner !== null;
+
+  // 形状の種類を取得
+  const shapeType = getNodeShape(type, owner);
+
+  // 指定された形状を描画する関数
+  const renderShape = (shape: ShapeType) => {
+    const commonProps = {
+      fill: fillColor,
+      stroke: strokeColor,
+      strokeWidth: strokeWidth,
+    };
+
+    switch (shape) {
+      case "circle":
+        return <circle r={nodeSize / 2} {...commonProps} />;
+
+      case "square":
+        return (
+          <rect
+            x={-nodeSize / 2}
+            y={-nodeSize / 2}
+            width={nodeSize}
+            height={nodeSize}
+            {...commonProps}
+          />
+        );
+
+      case "diamond":
+        return (
+          <polygon
+            points={`0,${-nodeSize / 2} ${nodeSize / 2},0 0,${nodeSize / 2} ${-nodeSize / 2},0`}
+            {...commonProps}
+          />
+        );
+    }
+  };
 
   return (
     <g
       transform={`translate(${position.x}, ${position.y})`}
-      onClick={() => onClick(id)}
-      onDoubleClick={() => onDoubleClick(id)}
+      onClick={isNotClickable ? undefined : () => onClick(id)}
+      onDoubleClick={isNotClickable ? undefined : () => onDoubleClick(data)}
       style={{
-        cursor: isDisabled ? "default" : "pointer",
-        opacity: isDisabled ? 0.7 : 1,
+        cursor: isNotClickable ? "default" : "pointer",
+        opacity: isDimmed ? 0.7 : 1,
       }}
-      pointerEvents={isDisabled ? "none" : "auto"}
+      pointerEvents={isNotClickable ? "none" : "auto"}
     >
       {/* ノードの形状を描画 */}
-      {type === "nixon" && (
-        <rect
-          x={-nodeSize / 2}
-          y={-nodeSize / 2}
-          width={nodeSize}
-          height={nodeSize}
-          fill={fillColor}
-          stroke={strokeColor}
-          strokeWidth={strokeWidth}
-        />
-      )}
-      {type === "informant" && (
-        <circle
-          r={nodeSize / 2}
-          fill={fillColor}
-          stroke={strokeColor}
-          strokeWidth={strokeWidth}
-        />
-      )}
-      {type === "evidence" && (
-        <polygon
-          points={`0,${-nodeSize / 2} ${nodeSize / 2},0 0,${nodeSize / 2} ${-nodeSize / 2},0`}
-          fill={fillColor}
-          stroke={strokeColor}
-          strokeWidth={strokeWidth}
-        />
-      )}
+      {renderShape(shapeType)}
 
       {/* ノードラベル */}
       <text
@@ -126,4 +146,4 @@ const EvidenceNode: React.FC<Props> = ({
   );
 };
 
-export default EvidenceNode;
+export default EvidenceNodeComponent;

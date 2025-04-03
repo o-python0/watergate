@@ -70,7 +70,7 @@ const TokenTypeSelectorModal: React.FC<Props> = ({
                   className="w-10 h-10 rounded border-2 border-gray-700 mb-2"
                   style={{
                     backgroundColor:
-                      color === "red"
+                      color === "yellow"
                         ? "#e74c3c"
                         : color === "blue"
                           ? "#3498db"

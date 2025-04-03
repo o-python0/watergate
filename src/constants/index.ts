@@ -11,9 +11,9 @@ export const TOKEN_INITIAL_POSITION = 0;
 
 // 色名から16進数カラーコードへの変換マップ
 export const COLOR_TO_HEX_MAP: Record<TokenColor, string> = {
-  red: "#e74c3c",
   blue: "#3498db",
   green: "#2ecc71",
+  yellow: "#f1c40f",
 };
 
 // デフォルトのゲーム状態

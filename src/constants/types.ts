@@ -5,7 +5,7 @@ export enum PlayerRole {
 }
 
 // トークンカラーの型
-export type TokenColor = "red" | "blue" | "green";
+export type TokenColor = "blue" | "green" | "yellow";
 
 // アクションパートの効果タイプ
 export type ActionEffectType =

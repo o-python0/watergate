@@ -1,7 +1,7 @@
 // 証拠ボード関連の型
 export type NodeOwner = "journalist" | "nixon" | null;
 export type NodeType = "informant" | "nixon" | "evidence";
-export type NodeColor = "blue" | "green" | "yellow" | "red"; // redは既存のカラーシステムと統合するため追加
+export type NodeColor = "blue" | "green" | "yellow";
 
 export interface EvidenceNode {
   id: string;
@@ -9,6 +9,7 @@ export interface EvidenceNode {
   color?: NodeColor;
   owner: NodeOwner;
   connections: string[]; // 接続先ノードのID配列
+  placedEvidenceId: string | null;
 }
 
 export interface EvidenceGraph {

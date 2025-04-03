@@ -1,5 +1,10 @@
 import { create } from "zustand";
-import { EvidenceGraph, NodeOwner } from "../types/evidenceBoard.types";
+import { TokenColor } from "../constants/types";
+import {
+  EvidenceGraph,
+  NodeColor,
+  NodeOwner,
+} from "../types/evidenceBoard.types";
 
 // 初期ノードの位置を計算するヘルパー関数
 const calculateInitialPositions = (
@@ -53,7 +58,8 @@ const createInitialGraph = (): EvidenceGraph => {
         id: "nix",
         type: "nixon",
         owner: null,
-        connections: ["ev_b_1", "ev_g_1", "ev_r_1", "ev_y_1"],
+        connections: ["ev_b_1", "ev_g_1", "ev_g_2", "ev_y_1"],
+        placedEvidenceId: null,
       },
       // 情報提供者ノード
       inf_1: {
@@ -61,6 +67,7 @@ const createInitialGraph = (): EvidenceGraph => {
         type: "informant",
         owner: null,
         connections: ["ev_g_1", "ev_y_1"],
+        placedEvidenceId: null,
       },
       // 証拠ノード
       ev_b_1: {
@@ -68,21 +75,24 @@ const createInitialGraph = (): EvidenceGraph => {
         type: "evidence",
         color: "blue",
         owner: null,
-        connections: ["nix", "ev_r_1"],
+        connections: ["nix", "ev_g_2"],
+        placedEvidenceId: null,
       },
       ev_g_1: {
         id: "ev_g_1",
         type: "evidence",
         color: "green",
         owner: null,
-        connections: ["nix", "ev_y_1"],
+        connections: ["nix", "ev_y_1", "inf_1"],
+        placedEvidenceId: null,
       },
-      ev_r_1: {
-        id: "ev_r_1",
+      ev_g_2: {
+        id: "ev_g_2",
         type: "evidence",
-        color: "red",
+        color: "green",
         owner: null,
         connections: ["nix", "ev_b_1"],
+        placedEvidenceId: null,
       },
       ev_y_1: {
         id: "ev_y_1",
@@ -90,6 +100,7 @@ const createInitialGraph = (): EvidenceGraph => {
         color: "yellow",
         owner: null,
         connections: ["nix", "ev_g_1", "inf_1"],
+        placedEvidenceId: null,
       },
     },
   };
@@ -106,14 +117,22 @@ interface EvidenceBoardStore {
   // 状態 - ゲームロジック
   evidenceGraph: EvidenceGraph;
   selectedNodeId: string | null;
+  selectedNode: { id: string; color: NodeColor } | null;
+  setSelectedNode: (selectedNode: { id: string; color: NodeColor }) => void;
+  setPlacedEvidenceId: (nodeid: string, tokenId: string) => void;
 
   // 状態 - 描画用
   nodePositions: { [nodeId: string]: { x: number; y: number } };
+  capturedEvidenceTokens: {
+    id: string;
+    colors: string[];
+  }[];
 
   // 基本アクション - ゲームロジック
   setEvidenceGraph: (graph: EvidenceGraph) => void;
   selectNode: (nodeId: string | null) => void;
   setNodeOwner: (nodeId: string, owner: NodeOwner) => void;
+  addCapturedToken: (tokenId: string, colors: TokenColor[]) => void;
 
   // 基本アクション - 描画用
   setNodePosition: (nodeId: string, x: number, y: number) => void;
@@ -127,6 +146,19 @@ export const useEvidenceBoardStore = create<EvidenceBoardStore>((set) => ({
   // 初期状態 - ゲームロジック
   evidenceGraph: createInitialGraph(),
   selectedNodeId: null,
+  selectedNode: null,
+  setSelectedNode: (node) =>
+    set(() => ({
+      selectedNode: {
+        id: node.id,
+        color: node.color,
+      },
+    })),
+  capturedEvidenceTokens: [
+    { id: "token1", colors: ["blue", "green"] },
+    { id: "token2", colors: ["green"] },
+    { id: "token3", colors: ["green", "yellow"] },
+  ],
 
   // 初期状態 - 描画用
   nodePositions: initialNodePositions,
@@ -148,6 +180,32 @@ export const useEvidenceBoardStore = create<EvidenceBoardStore>((set) => ({
       return { evidenceGraph: updatedGraph };
     });
   },
+
+  addCapturedToken: (tokenId, colors) =>
+    set((state) => ({
+      capturedEvidenceTokens: [
+        ...state.capturedEvidenceTokens,
+        { id: tokenId, colors },
+      ],
+    })),
+  setPlacedEvidenceId: (nodeId: string, tokenId: string) =>
+    set((state) => {
+      const updateNodes = { ...state.evidenceGraph.nodes };
+
+      if (updateNodes[nodeId]) {
+        updateNodes[nodeId] = {
+          ...updateNodes[nodeId],
+          placedEvidenceId: tokenId,
+        };
+      }
+
+      return {
+        evidenceGraph: {
+          ...state.evidenceGraph,
+          nodes: updateNodes,
+        },
+      };
+    }),
 
   // アクション - 描画用
   setNodePosition: (nodeId, x, y) => {

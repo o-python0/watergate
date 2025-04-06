@@ -6,12 +6,15 @@ import { usePlayerStore } from "./playerStore";
 import { fetchHandByRole } from "../services/deckService";
 import { TOKEN_INITIAL_POSITION } from "../constants";
 import { PlayerInfo, PlayerRole } from "../constants/types";
+import { useEvidenceBoardStore } from "./evidenceBoardStore";
+import { useCardStore } from "./cardStore";
 
 // ゲームフェーズの定義
 export enum GamePhase {
   PREPARATION = "preparation",
   CARD = "card",
   EVALUATION = "evaluation",
+  TOKEN_PLACEMENT = "token_placement",
 }
 
 // ラウンド管理に関するストアの型定義
@@ -25,6 +28,8 @@ interface RoundStore {
   cardPhaseComplete: boolean;
   evaluationPhaseComplete: boolean;
   isAutoProgressEnabled: boolean;
+  isPlacementTokenMode: boolean;
+  setIsPlacementTokenMode: (isMode: boolean) => void;
 
   // アクション
   startNewRound: () => void;
@@ -53,6 +58,12 @@ interface RoundStore {
 }
 
 export const useRoundStore = create<RoundStore>((set, get) => ({
+  isPlacementTokenMode: false,
+  setIsPlacementTokenMode: (isMode) =>
+    set({
+      isPlacementTokenMode: isMode,
+    }),
+
   // 初期状態
   currentRound: 0,
   currentPhase: GamePhase.PREPARATION,
@@ -143,13 +154,24 @@ export const useRoundStore = create<RoundStore>((set, get) => ({
 
   // カードをプレイ
   playCard: (cardId: string) => {
-    // カードプレイのロジックは実装済みのものを使用
-    // カードプレイ後、自動的に手番を終了
-    get().endTurn();
+    // カードプレイによって獲得したトークンがあるか確認
+    useCardStore.getState().discardCard(cardId);
+
+    setTimeout(() => {
+      // stateが更新されるのを待ってから実行
+      // カードプレイ後、自動的に手番を終了
+      const isTokenPlacementMode =
+        useEvidenceBoardStore.getState().isTokenPlacementMode;
+      if (!isTokenPlacementMode) {
+        get().endTurn();
+      }
+    }, 3000);
   },
 
   // 現在の手番を終了し、次のプレイヤーへ
+  // TODO:証拠トークンが獲得されている場合は、ノード選択フェーズに入る
   endTurn: () => {
+    console.log("ターン終了");
     const remainingTurns = get().remainingTurns - 1;
     set({ remainingTurns });
 

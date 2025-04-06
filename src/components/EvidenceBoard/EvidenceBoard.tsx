@@ -2,13 +2,7 @@
 import React, { useRef, useEffect, useState } from "react";
 import { BOARD_BASE_SIZE } from "../../constants/evidenceBoard.constants";
 import { useEvidenceBoardStore } from "../../store/evidenceBoardStore";
-import { usePlayerStore } from "../../store/playerStore";
-import { useRoundStore } from "../../store/roundStore";
-import {
-  EvidenceNode,
-  NodeColor,
-  NodeOwner,
-} from "../../types/evidenceBoard.types";
+import { EvidenceNode, NodeColor } from "../../types/evidenceBoard.types";
 import ConnectionLine from "./ConnectionLine";
 import CorkBoard from "./CorkBoard";
 import EvidenceNodeComponent from "./EvidenceNode";
@@ -32,12 +26,8 @@ const EvidenceBoard: React.FC = () => {
     capturedEvidenceTokens,
     selectNode,
     setSelectedNode,
-    setNodeOwner,
-    addCapturedToken,
-    setPlacedEvidenceId,
+    placeEvidenceToken,
   } = useEvidenceBoardStore();
-  const { currentPlayerTurn } = useRoundStore();
-  const { players } = usePlayerStore();
 
   // コンテナのサイズに合わせてSVGサイズを調整
   useEffect(() => {
@@ -135,19 +125,10 @@ const EvidenceBoard: React.FC = () => {
     selectNode(selectedNodeId === nodeId ? null : nodeId);
   };
 
-  // ダブルクリックで所有者を変更
+  // ダブルクリックでトークン選択モーダルへ
   const handleNodeDoubleClick = (node: { id: string; color: NodeColor }) => {
     setSelectedNode({ id: node.id, color: node.color });
     setShowNodeModal(true);
-  };
-
-  const changeNodeOwner = () => {
-    if (!selectedNode) return;
-
-    // 現在のターンのプレイヤーroleを取得する
-    const currentPlayerRole = players[currentPlayerTurn || ""]?.role;
-    // ノードの所有者を変更
-    setNodeOwner(selectedNode.id, currentPlayerRole as NodeOwner);
   };
 
   // 利用可能なトークンをフィルタリング
@@ -163,14 +144,9 @@ const EvidenceBoard: React.FC = () => {
       }));
   };
 
-  // トークンを選択した際の処理
+  // モーダルで配置するトークンを選択した後の処理
   const handleTokenSelect = (tokenId: string) => {
-    // トークンの所有者を変更
-    changeNodeOwner();
-    // 配置されたtokenIdの紐付け
-    if (selectedNode) {
-      setPlacedEvidenceId(selectedNode?.id, tokenId);
-    }
+    selectedNode?.id && placeEvidenceToken(selectedNode.id, tokenId);
 
     setShowNodeModal(false);
   };

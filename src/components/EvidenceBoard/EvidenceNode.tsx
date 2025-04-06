@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useMemo } from "react";
 import {
   getNodeShape,
   NODE_COLORS,
@@ -53,7 +53,8 @@ const EvidenceNodeComponent: React.FC<Props> = ({
   const { id, type, color, owner } = data;
   const { onClick, onDoubleClick } = handlers;
   const nodeSize = NODE_SIZES[type];
-  const { evidenceGraph } = useEvidenceBoardStore();
+  const { evidenceGraph, isTokenPlacementMode, capturedEvidenceTokens } =
+    useEvidenceBoardStore();
 
   // ノードの色を決定
   let fillColor = NODE_COLORS.default;
@@ -80,7 +81,13 @@ const EvidenceNodeComponent: React.FC<Props> = ({
 
   // nodeの非活性条件
   const isNotClickable =
-    type === "nixon" || type === "informant" || owner !== null;
+    //nodeTypeが証拠トークン以外のもの
+    type === "nixon" ||
+    type === "informant" ||
+    // ownerが中立でないトークン
+    owner !== null ||
+    // トークン配置モードでない場合
+    !isTokenPlacementMode;
 
   // 形状の種類を取得
   const shapeType = getNodeShape(type, owner);
@@ -118,6 +125,19 @@ const EvidenceNodeComponent: React.FC<Props> = ({
     }
   };
 
+  const isHighlighted = useMemo(() => {
+    if (
+      !(isTokenPlacementMode && type === "evidence" && owner === null && color)
+    ) {
+      return false;
+    }
+
+    // capturedEvidenceTokens の中に、このノードの色と一致するトークンがあるかチェック
+    return capturedEvidenceTokens.some((token) =>
+      token.colors.includes(color as string)
+    );
+  }, [isTokenPlacementMode, type, owner, color, capturedEvidenceTokens]);
+
   return (
     <g
       transform={`translate(${position.x}, ${position.y})`}
@@ -127,6 +147,7 @@ const EvidenceNodeComponent: React.FC<Props> = ({
         cursor: isNotClickable ? "default" : "pointer",
         opacity: isDimmed ? 0.7 : 1,
       }}
+      className={isHighlighted ? "animate-pulse-highlight" : ""}
       pointerEvents={isNotClickable ? "none" : "auto"}
     >
       {/* ノードの形状を描画 */}

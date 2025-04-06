@@ -1,10 +1,12 @@
 import { create } from "zustand";
-import { TokenColor } from "../constants/types";
+import { Token, TokenColor } from "../constants/types";
 import {
   EvidenceGraph,
   NodeColor,
   NodeOwner,
 } from "../types/evidenceBoard.types";
+import { usePlayerStore } from "./playerStore";
+import { useRoundStore } from "./roundStore";
 
 // 初期ノードの位置を計算するヘルパー関数
 const calculateInitialPositions = (
@@ -119,7 +121,6 @@ interface EvidenceBoardStore {
   selectedNodeId: string | null;
   selectedNode: { id: string; color: NodeColor } | null;
   setSelectedNode: (selectedNode: { id: string; color: NodeColor }) => void;
-  setPlacedEvidenceId: (nodeid: string, tokenId: string) => void;
 
   // 状態 - 描画用
   nodePositions: { [nodeId: string]: { x: number; y: number } };
@@ -127,12 +128,16 @@ interface EvidenceBoardStore {
     id: string;
     colors: string[];
   }[];
+  isTokenPlacementMode: boolean;
 
   // 基本アクション - ゲームロジック
   setEvidenceGraph: (graph: EvidenceGraph) => void;
   selectNode: (nodeId: string | null) => void;
   setNodeOwner: (nodeId: string, owner: NodeOwner) => void;
   addCapturedToken: (tokenId: string, colors: TokenColor[]) => void;
+  placeEvidenceToken: (nodeId: string, tokenId: string) => void;
+  startTokenPlacement: (onComplete?: () => void) => void;
+  onPlacementCompleteCallback: (() => void) | null;
 
   // 基本アクション - 描画用
   setNodePosition: (nodeId: string, x: number, y: number) => void;
@@ -154,11 +159,14 @@ export const useEvidenceBoardStore = create<EvidenceBoardStore>((set) => ({
         color: node.color,
       },
     })),
-  capturedEvidenceTokens: [
-    { id: "token1", colors: ["blue", "green"] },
-    { id: "token2", colors: ["green"] },
-    { id: "token3", colors: ["green", "yellow"] },
-  ],
+  capturedEvidenceTokens: [],
+  // capturedEvidenceTokens: [
+  //   { id: "token1", colors: ["blue", "green"] },
+  //   { id: "token2", colors: ["green"] },
+  //   { id: "token3", colors: ["green", "yellow"] },
+  // ],
+  isTokenPlacementMode: false,
+  onPlacementCompleteCallback: null,
 
   // 初期状態 - 描画用
   nodePositions: initialNodePositions,
@@ -188,15 +196,48 @@ export const useEvidenceBoardStore = create<EvidenceBoardStore>((set) => ({
         { id: tokenId, colors },
       ],
     })),
-  setPlacedEvidenceId: (nodeId: string, tokenId: string) =>
-    set((state) => {
-      const updateNodes = { ...state.evidenceGraph.nodes };
 
+  startTokenPlacement: (onComplete?: () => void) => {
+    console.log("startTokenPlacement Mode");
+    set({
+      // capturedEvidenceTokens: tokens,
+      isTokenPlacementMode: true,
+      onPlacementCompleteCallback: onComplete || null,
+    });
+  },
+
+  // 証拠トークン配置処理
+  placeEvidenceToken: (nodeId: string, tokenId: string) =>
+    set((state) => {
+      // 現在のターンのプレイヤーのroleを取得
+      console.log("トークン配置");
+      const currentPlayerId = useRoundStore.getState().currentPlayerTurn;
+      const playerRole = usePlayerStore
+        .getState()
+        .getPlayerById(currentPlayerId!)?.role;
+
+      // 選択したnodeのownerとplacedEvidenceIdを更新
+      const updateNodes = { ...state.evidenceGraph.nodes };
       if (updateNodes[nodeId]) {
         updateNodes[nodeId] = {
           ...updateNodes[nodeId],
+          owner: playerRole as NodeOwner,
           placedEvidenceId: tokenId,
         };
+      }
+      // capturedEvidenceTokensからtokenIdと一致するTokenを削除
+      const updatedTokens = state.capturedEvidenceTokens.filter(
+        (token) => token.id !== tokenId
+      );
+
+      const isAllTokensPlaced = updatedTokens.length === 0;
+
+      // 全て配置したらコールバックを実行
+      if (isAllTokensPlaced && state.onPlacementCompleteCallback) {
+        setTimeout(() => {
+          state.onPlacementCompleteCallback?.();
+          set({ onPlacementCompleteCallback: null });
+        }, 0);
       }
 
       return {
@@ -204,6 +245,8 @@ export const useEvidenceBoardStore = create<EvidenceBoardStore>((set) => ({
           ...state.evidenceGraph,
           nodes: updateNodes,
         },
+        capturedEvidenceTokens: updatedTokens,
+        isTokenPlacementMode: !isAllTokensPlaced,
       };
     }),
 

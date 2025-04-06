@@ -13,16 +13,18 @@ import { usePlayerCards } from "../../hooks/usePlayerCards";
 import { useGameStore } from "../../store/gameStore";
 import { useCards, useGame, usePlayers, useTokens } from "../../store/hooks";
 import { useRoundStore } from "../../store/roundStore";
+import { useEvidenceBoardStore } from "../../store/evidenceBoardStore";
+import CardAreaOverlay from "./CardAreaOverlay";
 
 const PlayerCardsArea: React.FC = () => {
   const { selectedCardId, setSelectedCardId, animating } = useGameStore();
   const { localPlayer } = usePlayers();
   const { moveToken, flipTokenFaceUp, findFaceDownTokenWithColor } =
     useTokens();
-  const { discardCard } = useCards();
-  const { endTurn, currentPhase, currentPlayerTurn } = useRoundStore();
+  const { currentPhase, currentPlayerTurn, playCard } = useRoundStore();
   const localPlayerId = useGameStore((state) => state.getLocalPlayerId());
   const { hand, loading, loadPlayerHand } = usePlayerCards();
+  const { isTokenPlacementMode } = useEvidenceBoardStore();
   const localPlayerRole = localPlayer?.role || PlayerRole.NIXON;
 
   // ローカルプレイヤーのターンかどうかを判定
@@ -30,8 +32,13 @@ const PlayerCardsArea: React.FC = () => {
   // カードフェーズ中かどうかをチェック
   const isCardPhase = currentPhase === "card";
   const isCardPlayable = () => {
-    return isCardPhase && isLocalPlayerTurn && !animating;
+    return (
+      isCardPhase && isLocalPlayerTurn && !animating && !isTokenPlacementMode
+    );
   };
+  // オーバーレイ表示条件
+  const isShowOverlay =
+    (!isLocalPlayerTurn && isCardPhase) || !isCardPhase || isTokenPlacementMode;
 
   useEffect(() => {
     loadPlayerHand();
@@ -128,14 +135,13 @@ const PlayerCardsArea: React.FC = () => {
 
   // カードプレイ完了の共通処理
   const completeCardPlay = (cardId: string) => {
-    // プレイしたカードを捨てる
-    discardCard(selectedCardId);
+    // プレイしたカードを捨てる(roundStoreのplayCard()に置き換え)
+    playCard(selectedCardId);
+    // discardCard(selectedCardId);
     setSelectedCardId("");
     // モーダルを閉じる
     closeTypeSelector();
     closeActionSelector();
-    // カードプレイ後にターンを終了
-    endTurn();
   };
 
   if (loading) {
@@ -157,30 +163,14 @@ const PlayerCardsArea: React.FC = () => {
         ))}
       </div>
 
-      {/* 相手ターン時または非カードフェーズ時に表示するオーバーレイ */}
-      {((!isLocalPlayerTurn && isCardPhase) || !isCardPhase) && (
-        <div className="absolute inset-0 bg-black bg-opacity-30 z-10 flex items-center justify-center">
-          {/* 相手ターン時のメッセージ */}
-          {!isLocalPlayerTurn && isCardPhase && (
-            <div className="bg-white px-6 py-3 rounded-lg shadow-lg border-2 border-red-400">
-              <span className="text-xl font-bold text-red-600">
-                相手のターン中です・・・
-              </span>
-            </div>
-          )}
-
-          {/* カードフェーズ以外の場合のメッセージ */}
-          {!isCardPhase && (
-            <div className="bg-white px-6 py-3 rounded-lg shadow-lg border-2 border-blue-400">
-              <span className="text-xl font-bold text-blue-600">
-                {currentPhase === "preparation"
-                  ? "準備フェーズです"
-                  : "評価フェーズです"}
-              </span>
-            </div>
-          )}
-        </div>
-      )}
+      {/* 非アクティブ時のオーバーレイ */}
+      <CardAreaOverlay
+        isVisible={isShowOverlay}
+        isTokenPlacementMode={isTokenPlacementMode}
+        isLocalPlayerTurn={isLocalPlayerTurn}
+        isCardPhase={isCardPhase}
+        currentPhase={currentPhase}
+      />
 
       {/* トークンタイプ選択モーダル (1段階目) */}
       {showTypeSelector && typeSelectorCard && (

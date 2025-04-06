@@ -1,8 +1,10 @@
 // src/store/tokenStore.ts
 import { create } from "zustand";
 import { TokenType, TokenColor } from "../constants/types";
+import { useEvidenceBoardStore } from "./evidenceBoardStore";
 import { useGameStore } from "./gameStore";
 import { usePlayerStore } from "./playerStore";
+import { useRoundStore } from "./roundStore";
 
 // トークン操作に関するストアの型定義
 interface TokenStore {
@@ -22,6 +24,14 @@ interface TokenStore {
     steps: number,
     tokenId?: number | string
   ) => void;
+
+  updateTokenOwner: (
+    tokenType: TokenType,
+    tokenId: number | string | undefined,
+    position: number,
+    owner: string
+  ) => void;
+
   _captureToken: (
     tokenType: TokenType,
     position: number,
@@ -123,6 +133,30 @@ export const useTokenStore = create<TokenStore>((set, get) => ({
     }
   },
 
+  updateTokenOwner: (
+    tokenType: TokenType,
+    tokenId: number | string | undefined,
+    position: number,
+    owner: string
+  ) => {
+    useGameStore.getState().setGameState((state) => {
+      if (tokenType === "evidence" && tokenId) {
+        return {
+          ...state,
+          evidence: state.evidence.map((t) =>
+            t.id === tokenId ? { ...t, position, owner } : t
+          ),
+        };
+      } else if (tokenType !== "evidence") {
+        return {
+          ...state,
+          [tokenType]: { ...state[tokenType], owner },
+        };
+      }
+      return state;
+    });
+  },
+
   // トークン獲得内部実装
   _captureToken: (tokenType, position, tokenId) => {
     // 獲得判定とownerの変更処理
@@ -130,28 +164,7 @@ export const useTokenStore = create<TokenStore>((set, get) => ({
     if (!capturingPlayerId) return;
 
     // トークンのオーナーを更新
-    const updateToken = () => {
-      useGameStore.getState().setGameState((state) => {
-        if (tokenType === "evidence" && tokenId) {
-          return {
-            ...state,
-            evidence: state.evidence.map((t) =>
-              t.id === tokenId
-                ? { ...t, position, owner: capturingPlayerId }
-                : t
-            ),
-          };
-        } else if (tokenType !== "evidence") {
-          return {
-            ...state,
-            [tokenType]: { ...state[tokenType], owner: capturingPlayerId },
-          };
-        }
-        return state;
-      });
-    };
-
-    updateToken();
+    get().updateTokenOwner(tokenType, tokenId, position, capturingPlayerId);
 
     // "initiative"または"power"トークンの場合、ラウンドで獲得したトークンを追加
     if (tokenType === "initiative" || tokenType === "power") {
@@ -173,6 +186,19 @@ export const useTokenStore = create<TokenStore>((set, get) => ({
           ...players,
           [capturingPlayerId]: updatedPlayer,
         });
+      }
+    } else if (tokenType === "evidence" && tokenId) {
+      const { gameState } = useGameStore.getState();
+      const token = gameState.evidence.find((t) => t.id === tokenId);
+
+      if (token && token.colors) {
+        useEvidenceBoardStore
+          .getState()
+          .addCapturedToken(token.id as string, token.colors);
+
+        useEvidenceBoardStore
+          .getState()
+          .startTokenPlacement(useRoundStore.getState().endTurn);
       }
     }
   },

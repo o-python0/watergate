@@ -1,46 +1,94 @@
-# Getting Started with Create React App
+# Watergate
+ボードゲーム「WaterGate（Matthias Cramer作）」のデジタル版です。
+2人用のカードドリブンな対戦ゲームになります。
 
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
 
-## Available Scripts
+## ディレクトリ構成
 
-In the project directory, you can run:
+```txt
+backend/app/                                         # バックエンドアプリケーション本体のルート
+├── main.py                                          # FastAPI の起動エントリポイント
+├── db.py                                            # DB 接続やセッション管理
+├── settings.py                                      # 環境変数や設定値の読み込み
+│
+├── api/                                             # API レイヤー
+│   └── routes/                                      # エンドポイント定義
+│       ├── health.py                                # ヘルスチェック API
+│       ├── matches.py                               # 試合情報取得系 API
+│       └── actions.py                               # プレイヤー操作受付 API
+│
+├── services/                                        # ユースケース単位の業務ロジック
+│   ├── game_info_service.py                         # ゲーム全体情報の組み立て
+│   ├── track_service.py                             # 調査トラック関連の処理
+│   ├── evidence_board_service.py                    # 証拠ボード関連の処理
+│   ├── player_state_service.py                      # プレイヤー状態取得・更新処理
+│   ├── card_action_service.py                       # カード使用時の処理
+│   └── decision_service.py                          # 保留中選択の解決処理
+│
+├── domain/                                          # ドメインルールと状態変化の中核
+│   ├── entities/                                    # ドメインで扱う状態オブジェクト
+│   │   ├── match_state.py                           # 試合全体の進行状態
+│   │   └── pending_decision.py                      # プレイヤーの未確定選択状態
+│   │
+│   ├── rules/                                       # ゲーム進行上の判定ルール群
+│   │   ├── turn_rule.py                             # 手番進行に関するルール
+│   │   ├── card_phase_rule.py                       # カード解決フェーズのルール
+│   │   ├── pending_decision_rule.py                 # 選択待ち状態の制御ルール
+│   │   └── player_visibility_rule.py                # プレイヤーに見える情報の制御
+│   │
+│   └── resolvers/                                   # 効果解決や処理分配を担当
+│       ├── effect_resolution_service.py             # 効果解決の統括サービス
+│       └── effect_handlers/                         # 効果種別ごとの個別ハンドラ
+│           ├── move_token.py                        # トークン移動処理
+│           ├── flip_token.py                        # トークン反転処理
+│           ├── select_board_node.py                 # 証拠ボード選択処理
+│           └── counter.py                           # カウンター系効果処理
+│
+├── repositories/                                    # 永続化データへのアクセス層
+│   ├── match_repository.py                          # 試合データの取得・保存
+│   ├── player_state_repository.py                   # プレイヤー状態の取得・保存
+│   ├── track_state_repository.py                    # 調査トラック状態の取得・保存
+│   ├── evidence_board_state_repository.py           # 証拠ボード状態の取得・保存
+│   └── pending_decision_state_repository.py         # 保留中選択状態の取得・保存
+│
+├── schemas/                                         # API 入出力用の Pydantic スキーマ
+│   ├── common.py                                    # 共通レスポンス・基本型
+│   ├── game_info.py                                 # ゲーム情報 API 用スキーマ
+│   ├── track.py                                     # 調査トラック API 用スキーマ
+│   ├── evidence_board.py                            # 証拠ボード API 用スキーマ
+│   ├── players.py                                   # プレイヤー情報 API 用スキーマ
+│   └── actions.py                                   # 操作受付 API 用スキーマ
+│
+└── models/                                          # ORM モデル定義
+    ├── match.py                                     # 試合テーブル定義
+    ├── player.py                                    # プレイヤーテーブル定義
+    ├── track.py                                     # 調査トラックテーブル定義
+    ├── evidence_board.py                            # 証拠ボードテーブル定義
+    └── pending_decision.py                          # 保留中選択テーブル定義
+```
 
-### `npm start`
+## 開発環境の起動
 
-Runs the app in the development mode.\
-Open [http://localhost:3000](http://localhost:3000) to view it in the browser.
+```bash
+docker compose up -d --build
+```
 
-The page will reload if you make edits.\
-You will also see any lint errors in the console.
+## アクセス先
 
-### `npm test`
+- Frontend: [http://localhost:3000](http://localhost:3000)
+- Backend API: [http://localhost:8000](http://localhost:8000)
 
-Launches the test runner in the interactive watch mode.\
-See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
+## バックエンド疎通確認
 
-### `npm run build`
+```bash
+curl http://localhost:8000/health
+```
 
-Builds the app for production to the `build` folder.\
-It correctly bundles React in production mode and optimizes the build for the best performance.
+`{"status":"ok"}` が返れば正常です。
 
-The build is minified and the filenames include the hashes.\
-Your app is ready to be deployed!
+## Frontend から Backend 連携
 
-See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
+- `docker-compose.yml` で `REACT_APP_API_BASE_URL=http://localhost:8000` を設定済みです。
+- `REACT_APP_USE_MOCK_API=false` を設定済みなので、コンテナ起動時は実 API を呼びます。
+- Backend 側は `CORS_ORIGINS=http://localhost:3000` を許可する設定です。
 
-### `npm run eject`
-
-**Note: this is a one-way operation. Once you `eject`, you can’t go back!**
-
-If you aren’t satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
-
-Instead, it will copy all the configuration files and the transitive dependencies (webpack, Babel, ESLint, etc) right into your project so you have full control over them. All of the commands except `eject` will still work, but they will point to the copied scripts so you can tweak them. At this point you’re on your own.
-
-You don’t have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you shouldn’t feel obligated to use this feature. However we understand that this tool wouldn’t be useful if you couldn’t customize it when you are ready for it.
-
-## Learn More
-
-You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
-
-To learn React, check out the [React documentation](https://reactjs.org/).

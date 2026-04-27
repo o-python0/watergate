@@ -17,6 +17,11 @@ def list_by_ids(db: Session, card_ids: list[str]) -> list[Card]:
     return list(db.scalars(stmt).all())
 
 
+def list_by_prefix(db: Session, card_id_prefix: str) -> list[Card]:
+    stmt = select(Card).where(Card.id.like(f"{card_id_prefix}%")).order_by(Card.id)
+    return list(db.scalars(stmt).all())
+
+
 def save(db: Session, card: Card) -> Card:
     db.add(card)
     db.flush()

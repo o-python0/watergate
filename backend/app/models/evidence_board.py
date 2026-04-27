@@ -30,6 +30,7 @@ class EvidenceBoardState(MatchScopedRecord):
         }
     }
     """
+
     __tablename__ = "evidence_board_states"
 
     evidence_board_state_json: Mapped[dict[str, Any]] = mapped_column(

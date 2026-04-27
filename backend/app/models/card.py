@@ -15,7 +15,9 @@ class Card(BaseRecord):
     text: Mapped[str | None] = mapped_column(Text, nullable=True)
     image_path: Mapped[str | None] = mapped_column(String(255), nullable=True)
     value: Mapped[int | None] = mapped_column(Integer, nullable=True)
-    value_colors_json: Mapped[list[str]] = mapped_column(JSON, nullable=False, default=list)
+    value_colors_json: Mapped[list[str]] = mapped_column(
+        JSON, nullable=False, default=list
+    )
     action_type: Mapped[str] = mapped_column(String(50), nullable=False)
     effects_json: Mapped[list[dict[str, Any]]] = mapped_column(
         JSON, nullable=False, default=list

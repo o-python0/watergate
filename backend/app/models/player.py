@@ -33,6 +33,7 @@ class PlayerState(MatchScopedRecord):
         }
     }
     """
+
     __tablename__ = "player_states"
 
     players_state_json: Mapped[dict[str, Any]] = mapped_column(

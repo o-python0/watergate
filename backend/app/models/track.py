@@ -25,6 +25,7 @@ class TrackState(MatchScopedRecord):
         ]
     }
     """
+
     __tablename__ = "track_states"
 
     track_state_json: Mapped[dict[str, Any]] = mapped_column(

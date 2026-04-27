@@ -1,12 +1,15 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from app.api.routes.actions import router as actions_router
 from app.api.routes.health import router as health_router
 from app.api.routes.matches import router as matches_router
 from app.settings import settings
 
 app = FastAPI(title=settings.app_name)
 
-origins = [origin.strip() for origin in settings.cors_origins.split(",") if origin.strip()]
+origins = [
+    origin.strip() for origin in settings.cors_origins.split(",") if origin.strip()
+]
 
 app.add_middleware(
     CORSMiddleware,
@@ -18,3 +21,4 @@ app.add_middleware(
 
 app.include_router(health_router)
 app.include_router(matches_router)
+app.include_router(actions_router)

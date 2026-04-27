@@ -28,6 +28,7 @@ class Match(BaseRecord):
         }
     ]
     """
+
     __tablename__ = "matches"
 
     status: Mapped[MatchStatus] = mapped_column(String(50), nullable=False)

@@ -24,6 +24,7 @@ class PendingDecisionState(MatchScopedRecord):
 
     pending が存在しない場合は `None` を保持する。
     """
+
     __tablename__ = "pending_decision_states"
 
     pending_decision_json: Mapped[dict[str, Any] | None] = mapped_column(

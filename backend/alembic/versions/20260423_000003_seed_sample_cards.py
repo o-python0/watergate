@@ -8,7 +8,6 @@ Create Date: 2026-04-23 00:00:03
 from alembic import op
 import sqlalchemy as sa
 
-
 # revision identifiers, used by Alembic.
 revision = "20260423_000003"
 down_revision = "20260423_000002"
@@ -90,11 +89,7 @@ def upgrade() -> None:
 
 
 def downgrade() -> None:
-    op.execute(
-        sa.text(
-            """
+    op.execute(sa.text("""
             DELETE FROM cards
             WHERE id IN ('nx_03', 'nx_10', 'ed_09')
-            """
-        )
-    )
+            """))

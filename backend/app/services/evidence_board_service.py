@@ -7,14 +7,17 @@ from app.schemas.evidence_board import EvidenceBoardResponse
 
 def get_evidence_board(db: Session, match_id: str) -> EvidenceBoardResponse:
     """試合に紐づく証拠ボードの状態を返す。"""
+    # 試合状態を取得する。
     match = match_repository.get_by_id(db, match_id)
     if match is None:
         raise HTTPException(status_code=404, detail="match not found")
 
+    # 証拠ボード状態を取得する。
     evidence_board_state = evidence_board_state_repository.get_by_match_id(db, match_id)
     if evidence_board_state is None:
         raise HTTPException(status_code=404, detail="evidence board state not found")
 
+    # evidence-board レスポンスを組み立てる。
     return EvidenceBoardResponse(
         match_id=match.id,
         evidence_board=evidence_board_state.evidence_board_state_json,

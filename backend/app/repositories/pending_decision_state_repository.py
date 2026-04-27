@@ -9,7 +9,9 @@ def get_by_match_id(db: Session, match_id: str) -> PendingDecisionState | None:
     return db.scalar(stmt)
 
 
-def save(db: Session, pending_decision_state: PendingDecisionState) -> PendingDecisionState:
+def save(
+    db: Session, pending_decision_state: PendingDecisionState
+) -> PendingDecisionState:
     db.add(pending_decision_state)
     db.flush()
     db.refresh(pending_decision_state)

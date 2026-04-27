@@ -13,6 +13,7 @@ def get_players(
     request_player_id: str | None = None,
 ) -> PlayersResponse:
     """閲覧プレイヤー視点の me / opponent 表示情報を返す。"""
+    # 試合とプレイヤー状態を取得する。
     match = match_repository.get_by_id(db, match_id)
     if match is None:
         raise HTTPException(status_code=404, detail="match not found")
@@ -21,18 +22,22 @@ def get_players(
     if player_state is None:
         raise HTTPException(status_code=404, detail="player state not found")
 
+    # リクエスト視点の me / opponent を確定する。
     players_state = player_state.players_state_json
     me_id = request_player_id or match.first_player_id
     if me_id not in players_state:
         raise HTTPException(status_code=404, detail="player not found")
 
-    opponent_id = next((player_id for player_id in players_state if player_id != me_id), None)
+    opponent_id = next(
+        (player_id for player_id in players_state if player_id != me_id), None
+    )
     if opponent_id is None:
         raise HTTPException(status_code=404, detail="opponent not found")
 
     me_state = players_state[me_id]
     opponent_state = players_state[opponent_id]
 
+    # 表示用レスポンスを組み立てる。
     return PlayersResponse(
         match_id=match.id,
         players={
@@ -58,7 +63,9 @@ def _build_me_player(player_id: str, player_state: dict[str, Any]) -> dict[str, 
     }
 
 
-def _build_opponent_player(player_id: str, player_state: dict[str, Any]) -> dict[str, Any]:
+def _build_opponent_player(
+    player_id: str, player_state: dict[str, Any]
+) -> dict[str, Any]:
     """相手用の表示データを秘匿情報を除いて構築する。"""
     return {
         "id": player_id,

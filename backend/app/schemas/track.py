@@ -15,6 +15,7 @@ class EvidenceTokenResponse(BaseModel):
     colors: list[str]
     owner: NodeOwner | None = None
     is_face_up: bool
+    has_bonus: bool
     label: str
 
 

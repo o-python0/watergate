@@ -46,6 +46,7 @@ _TRACK: dict[str, Any] = {
                 "colors": ["blue"],
                 "owner": None,
                 "is_face_up": False,
+                "has_bonus": True,
                 "label": "1",
             },
             {
@@ -54,6 +55,7 @@ _TRACK: dict[str, Any] = {
                 "colors": ["green", "yellow"],
                 "owner": None,
                 "is_face_up": True,
+                "has_bonus": False,
                 "label": "2",
             },
         ],

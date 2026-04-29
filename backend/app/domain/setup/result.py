@@ -5,7 +5,7 @@ from app.models.match import Match
 from app.models.pending_decision import PendingDecisionState
 from app.models.player import PlayerState
 from app.models.room import Room
-from app.models.track import TrackState
+from app.models.token_state import TokenState
 
 
 @dataclass
@@ -13,6 +13,6 @@ class MatchSetupResult:
     room: Room
     match: Match
     player_state: PlayerState
-    track_state: TrackState
+    token_state: TokenState
     evidence_board_state: EvidenceBoardState
     pending_decision_state: PendingDecisionState

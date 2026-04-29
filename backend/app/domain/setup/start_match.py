@@ -8,7 +8,7 @@ from app.domain.setup.initial_player_state import (
     build_players_state,
     find_player_id_by_role,
 )
-from app.domain.setup.initial_track_state import build_initial_track_state
+from app.domain.setup.initial_token_state import build_initial_token_state
 from app.domain.setup.result import MatchSetupResult
 from app.domain.setup.room_validation import validate_room_for_start
 from app.models.evidence_board import EvidenceBoardState
@@ -16,7 +16,7 @@ from app.models.match import Match
 from app.models.pending_decision import PendingDecisionState
 from app.models.player import PlayerState
 from app.models.room import Room
-from app.models.track import TrackState
+from app.models.token_state import TokenState
 from app.schemas.common import CardSubphase, MatchStatus, Phase
 
 
@@ -57,11 +57,14 @@ def start_match(
         ),
     )
 
-    # 調査トラックの初期状態を作る。
-    track_state = TrackState(
-        id=f"ts_{match_id}",
+    # トークン状態の初期状態を作る。
+    initial_token_state = build_initial_token_state()
+    token_state = TokenState(
+        id=f"tks_{match_id}",
         match_id=match_id,
-        track_state_json=build_initial_track_state(),
+        initiative_state_json=initial_token_state["initiative_state_json"],
+        power_state_json=initial_token_state["power_state_json"],
+        evidence_tokens_state_json=initial_token_state["evidence_tokens_state_json"],
     )
 
     # 証拠ボードの初期状態を作る。
@@ -87,7 +90,7 @@ def start_match(
         room=room,
         match=match,
         player_state=player_state,
-        track_state=track_state,
+        token_state=token_state,
         evidence_board_state=evidence_board_state,
         pending_decision_state=pending_decision_state,
     )

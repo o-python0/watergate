@@ -7,11 +7,13 @@ from app.domain.card_phase.card_play import (
     build_counter_pending_decision,
     evaluate_counter_check,
     get_player,
+    get_opponent_player_id,
     list_all_hand_card_ids,
     resolve_card_effect,
     upsert_pending_decision_state,
     validate_execute_card_preconditions,
 )
+from app.domain.card_phase.phase_transition_judge import is_card_phage_complete
 from app.repositories import (
     match_repository,
     pending_decision_state_repository,
@@ -21,7 +23,7 @@ from app.repositories.pending_play_context_store import (
     default_pending_play_context_store,
 )
 from app.schemas.actions import ActionAcceptedResponse
-from app.schemas.common import CardSubphase
+from app.schemas.common import CardSubphase, Phase
 from app.services.card_service import get_card, get_cards_by_ids
 
 
@@ -44,9 +46,7 @@ def execute_card(
         raise HTTPException(status_code=404, detail="player state not found")
 
     # pending 状態を取得し、実行可能かを検証する。
-    pending_decision_state = pending_decision_state_repository.get_by_match_id(
-        db, match_id
-    )
+    pending_decision_state = pending_decision_state_repository.get_by_match_id(db, match_id)
 
     # 実行対象カードが手札にあることを検証する。
     card = get_card(db, card_id)
@@ -77,7 +77,7 @@ def execute_card(
         execution_params=params,
     )
     if counter_check.can_counter:
-        # カウンター可能なカードを持っていた場合、pending を作成して解決待ちへ進める。
+    # カウンター可能なカードを持っていた場合、pending を作成して相手プレイヤーへ通知する
         match.card_subphase = CardSubphase.PENDING
         pending_decision = build_counter_pending_decision(
             action_id=action_id,
@@ -132,6 +132,18 @@ def execute_card(
         # プレイヤーにレスポンスを返却する
         # return ActionAcceptedResponse()
 
+    # カードフェーズ完了判定を行い、次状態へ遷移する。
+    is_complete = is_card_phage_complete(
+        match=result.match,
+        player_state=result.player_state,
+        pending_decision_state=result.pending_decision_state,
+    )
+    if is_complete:
+        match.phase = Phase.EVALUATION
+    else:
+        match.current_player_id = get_opponent_player_id(players_state, player_id)
+        match.card_subphase = CardSubphase.SELECT
+
     player_state_repository.save(db, result.player_state)
     match_repository.save(db, result.match)
     db.commit()
@@ -148,3 +160,4 @@ def execute_card(
 def _generate_action_id() -> str:
     """カード使用開始を識別する action_id を生成する。"""
     return f"act_{uuid4().hex[:8]}"
+

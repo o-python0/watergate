@@ -32,7 +32,7 @@ class NodeOwner(str, Enum):
     JOURNALIST = "journalist"
 
 
-class PendingDecisionType(str, Enum):
+class PendingType(str, Enum):
     IS_COUNTER_USED = "is_counter_used"
     SELECT_TOKEN_TO_MOVE = "select_token_to_move"
     SELECT_TOKEN_TO_FLIP = "select_token_to_flip"

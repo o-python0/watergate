@@ -19,7 +19,7 @@ from app.models.match import Match  # noqa: F401,E402
 from app.models.pending_decision import PendingDecisionState  # noqa: F401,E402
 from app.models.player import PlayerState  # noqa: F401,E402
 from app.models.room import Room  # noqa: F401,E402
-from app.models.track import TrackState  # noqa: F401,E402
+from app.models.token_state import TokenState  # noqa: F401,E402
 
 config = context.config
 config.set_main_option("sqlalchemy.url", settings.database_url)

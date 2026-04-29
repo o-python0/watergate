@@ -2,7 +2,7 @@ from datetime import datetime
 
 from pydantic import BaseModel
 
-from app.schemas.common import PendingDecisionType
+from app.schemas.common import PendingType
 
 
 class PendingDecisionConstraints(BaseModel):
@@ -14,7 +14,7 @@ class PendingDecisionConstraints(BaseModel):
 
 class PendingDecisionResponse(BaseModel):
     id: str
-    type: PendingDecisionType
+    type: PendingType
     actor_player_id: str
     source_action_id: str
     constraints: PendingDecisionConstraints

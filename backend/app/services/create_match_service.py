@@ -12,7 +12,7 @@ from app.repositories import (
     pending_decision_state_repository,
     player_state_repository,
     room_repository,
-    track_state_repository,
+    token_state_repository,
 )
 from app.schemas.match_start import MatchCreatedResponse
 
@@ -47,7 +47,7 @@ def create_match(db: Session, room_id: str) -> MatchCreatedResponse:
     # 作成した各状態を保存して commit する。
     match_repository.save(db, setup_result.match)
     player_state_repository.save(db, setup_result.player_state)
-    track_state_repository.save(db, setup_result.track_state)
+    token_state_repository.save(db, setup_result.token_state)
     evidence_board_state_repository.save(db, setup_result.evidence_board_state)
     pending_decision_state_repository.save(db, setup_result.pending_decision_state)
     room_repository.save(db, setup_result.room)

@@ -58,7 +58,7 @@ def start_match(
     )
 
     # トークン状態の初期状態を作る。
-    initial_token_state = build_initial_token_state()
+    initial_token_state = build_initial_token_state(rng)
     token_state = TokenState(
         id=f"tks_{match_id}",
         match_id=match_id,

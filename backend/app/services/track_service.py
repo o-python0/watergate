@@ -16,18 +16,23 @@ def get_track(db: Session, match_id: str) -> TrackResponse:
     if match is None:
         raise HTTPException(status_code=404, detail="match not found")
 
+    # トークン状態を取得
     token_state = token_state_repository.get_by_match_id(db, match_id)
     if token_state is None:
         raise HTTPException(status_code=404, detail="token state not found")
 
+    # プレイヤー状態を取得
     player_state = player_state_repository.get_by_match_id(db, match_id)
     if player_state is None:
         raise HTTPException(status_code=404, detail="player state not found")
+
+    # プレイヤー ID から陣営を引けるマップを作成する。
     role_by_player_id = {
         player_id: state.get("role")
         for player_id, state in player_state.players_state_json.items()
     }
 
+    # トラック上にある証拠トークンのみをレスポンス形式に整形する。
     evidence_tokens = [
         {
             "id": token.get("id", token_id),
@@ -41,8 +46,10 @@ def get_track(db: Session, match_id: str) -> TrackResponse:
         for token_id, token in token_state.evidence_tokens_state_json.items()
         if token.get("zone") == "track"
     ]
+    # レスポンスの順序が安定するように ID 順で並べる。
     evidence_tokens.sort(key=lambda token: token["id"])
 
+    # 各トークン種別ごとに最終的な payload を組み立てる。
     tokens_payload = {
         "initiative": {
             "id": "initiative",
@@ -61,7 +68,7 @@ def get_track(db: Session, match_id: str) -> TrackResponse:
         "evidence": evidence_tokens,
     }
 
-    # track レスポンスを組み立てる。
+    # レスポンス返却
     return TrackResponse(
         match_id=match.id,
         tokens=tokens_payload,

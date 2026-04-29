@@ -31,12 +31,12 @@ _TRACK: dict[str, Any] = {
     "tokens": {
         "initiative": {
             "id": "initiative",
-            "position": -1,
+            "position": 0,
             "owner": None,
         },
         "power": {
             "id": "power",
-            "position": 2,
+            "position": 0,
             "owner": None,
         },
         "evidence": [
@@ -51,12 +51,21 @@ _TRACK: dict[str, Any] = {
             },
             {
                 "id": "ev_2",
-                "position": 1,
+                "position": 0,
                 "colors": ["green", "yellow"],
                 "owner": None,
                 "is_face_up": True,
                 "has_bonus": False,
                 "label": "2",
+            },
+            {
+                "id": "ev_3",
+                "position": 0,
+                "colors": ["yellow"],
+                "owner": None,
+                "is_face_up": False,
+                "has_bonus": False,
+                "label": "3",
             },
         ],
     },

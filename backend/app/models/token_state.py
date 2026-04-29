@@ -19,15 +19,15 @@ class TokenState(MatchScopedRecord):
     {
         "track_position": 0,
         "owner_player_id": null,
-        "count": 5
+        "count": 9
     }
 
     `evidence_tokens_state_json` 例:
     {
         "ev_1": {
             "id": "ev_1",
-            "zone": "track",
-            "track_position": 0,
+            "zone": "supply",
+            "track_position": null,
             "owner_player_id": null,
             "is_face_up": false,
             "has_bonus": true,
@@ -36,10 +36,10 @@ class TokenState(MatchScopedRecord):
         },
         "ev_2": {
             "id": "ev_2",
-            "zone": "board",
-            "track_position": null,
+            "zone": "track",
+            "track_position": 0,
             "owner_player_id": null,
-            "is_face_up": true,
+            "is_face_up": false,
             "has_bonus": false,
             "colors": ["green", "yellow"],
             "label": "2"
